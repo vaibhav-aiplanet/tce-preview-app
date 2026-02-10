@@ -2,9 +2,12 @@ import { useState } from "react";
 import type { Route } from "./+types/home";
 import { useSearchParams } from "react-router";
 import { redirectToLogin } from "~/lib/auth";
-import { useTCEPlayerData } from "~/lib/tce-queries";
+import { useTCEPlayerData, useBatchAssetData } from "~/lib/tce-queries";
 import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
+import ExcelUpload from "~/components/ExcelUpload";
+import AssetGrid from "~/components/AssetGrid";
+import PlayerDialog from "~/components/PlayerDialog";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -25,11 +28,20 @@ export default function Home() {
   const submittedId = searchParams.get("assetId") || "";
   const [assetId, setAssetId] = useState(submittedId);
 
+  const [batchAssetIds, setBatchAssetIds] = useState<string[]>([]);
+  const [selectedAsset, setSelectedAsset] = useState<TCEAsset | null>(null);
+
   const { data: playerData, isLoading, error } = useTCEPlayerData(submittedId);
+  const {
+    data: batchData,
+    isLoading: isBatchLoading,
+    error: batchError,
+  } = useBatchAssetData(batchAssetIds);
 
   const handleSubmit = () => {
     const trimmedId = assetId.trim();
     if (!trimmedId) return;
+    setBatchAssetIds([]);
     setSearchParams({ assetId: trimmedId });
   };
 
@@ -38,6 +50,14 @@ export default function Home() {
       handleSubmit();
     }
   };
+
+  const handleExcelUpload = (ids: string[]) => {
+    setBatchAssetIds(ids);
+    setSearchParams({});
+  };
+
+  const showIdleState =
+    !playerData && !isLoading && !batchData && !isBatchLoading;
 
   return (
     <div
@@ -54,9 +74,7 @@ export default function Home() {
           alignItems: "center",
           gap: "8px",
           padding: "16px 24px",
-          ...(!playerData && !isLoading
-            ? { flex: 1, justifyContent: "center" }
-            : {}),
+          ...(showIdleState ? { flex: 1, justifyContent: "center" } : {}),
         }}
       >
         <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
@@ -79,20 +97,23 @@ export default function Home() {
           }}
         />
         <span style={{ fontSize: "13px", color: "#888" }}>
-          {isLoading ? (
+          {isLoading || isBatchLoading ? (
             "Loading..."
           ) : error ? (
             <span style={{ color: "red" }}>{error.message}</span>
+          ) : batchError ? (
+            <span style={{ color: "red" }}>{batchError.message}</span>
           ) : (
             <>
               Press <strong>Enter</strong> to load player
             </>
           )}
         </span>
+        <ExcelUpload onUpload={handleExcelUpload} />
       </div>
 
-      <div style={{ flex: 1 }}>
-        {isLoading && !playerData && (
+      <div style={{ flex: 1, overflow: "auto" }}>
+        {(isLoading || isBatchLoading) && !playerData && !batchData && (
           <div
             style={{
               display: "flex",
@@ -114,7 +135,21 @@ export default function Home() {
             asset={playerData.asset}
           />
         )}
+
+        {batchData && batchData.assets.length > 0 && (
+          <AssetGrid assets={batchData.assets} onSelect={setSelectedAsset} />
+        )}
       </div>
+
+      {selectedAsset && batchData && (
+        <PlayerDialog
+          asset={selectedAsset}
+          accessToken={batchData.accessToken}
+          expiryTime={batchData.expiryTime}
+          expiresIn={batchData.expiresIn}
+          onClose={() => setSelectedAsset(null)}
+        />
+      )}
     </div>
   );
 }

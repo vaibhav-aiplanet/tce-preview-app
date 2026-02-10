@@ -57,11 +57,29 @@ interface AngularPlayerReference {
   subscription?: { unsubscribe: () => void };
 }
 
+interface TCEAsset {
+  assetId: string;
+  tpId: string;
+  lcmsSubjectId: string;
+  lcmsGradeId: string;
+  title: string;
+  mimeType: string;
+  assetType: string;
+  thumbFileName: string;
+  fileName: string;
+  ansKeyId: string | null;
+  copyright: string;
+  subType: string;
+  description: string;
+  keywords: string;
+  encryptedFilePath: string;
+}
+
 interface TCEPlayerProps {
   accessToken: string;
   expiryTime: number;
   expiresIn: number;
-  asset: unknown;
+  asset: TCEAsset;
 }
 
 interface Window {

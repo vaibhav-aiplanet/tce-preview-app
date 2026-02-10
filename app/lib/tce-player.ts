@@ -115,7 +115,39 @@ export async function fetchTCEAssetDetails(ids: string[], accessToken: string) {
     const raw = assetData.playlistJson;
     const playlist = JSON.parse(raw);
 
-    return playlist.asset[0];
+    return playlist.asset[0] as TCEAsset;
+  } catch (error) {
+    console.error("Error fetching TCE asset details:", error);
+    getErrorMessage(error);
+    return undefined;
+  }
+}
+
+export async function fetchMultipleTCEAssetDetails(
+  ids: string[],
+  accessToken: string,
+): Promise<TCEAsset[]> {
+  try {
+    const params = new URLSearchParams();
+    params.append("ids", ids.join(","));
+    params.append("accessToken", accessToken);
+
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/v1/api/user/tceplayer/assets`,
+      params,
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        withCredentials: true,
+      },
+    );
+
+    const assetData = response.data.data;
+    const raw = assetData.playlistJson;
+    const playlist = JSON.parse(raw);
+
+    return playlist.asset as TCEAsset[];
   } catch (error) {
     console.error("Error fetching TCE asset details:", error);
     getErrorMessage(error);
