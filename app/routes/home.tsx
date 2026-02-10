@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Route } from "./+types/home";
+import { useSearchParams } from "react-router";
 import { redirectToLogin } from "~/lib/auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
 import TCEPlayer from "~/components/TCEPlayer";
@@ -20,15 +21,16 @@ export async function clientLoader() {
 }
 
 export default function Home() {
-  const [assetId, setAssetId] = useState("");
-  const [submittedId, setSubmittedId] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const submittedId = searchParams.get("assetId") || "";
+  const [assetId, setAssetId] = useState(submittedId);
 
   const { data: playerData, isLoading, error } = useTCEPlayerData(submittedId);
 
   const handleSubmit = () => {
     const trimmedId = assetId.trim();
     if (!trimmedId) return;
-    setSubmittedId(trimmedId);
+    setSearchParams({ assetId: trimmedId });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -38,67 +40,81 @@ export default function Home() {
   };
 
   return (
-    <div>
-      {!playerData && (
-        <div
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "8px",
+          padding: "16px 24px",
+          ...(!playerData && !isLoading
+            ? { flex: 1, justifyContent: "center" }
+            : {}),
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
+          Preview TCE Asset
+        </h1>
+        <input
+          type="text"
+          value={assetId}
+          onChange={(e) => setAssetId(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Enter Asset ID"
+          disabled={isLoading}
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            gap: "16px",
-            padding: "24px",
+            padding: "10px 16px",
+            fontSize: "16px",
+            border: "1px solid #ccc",
+            borderRadius: "6px",
+            width: "320px",
+            outline: "none",
           }}
-        >
+        />
+        <span style={{ fontSize: "13px", color: "#888" }}>
+          {isLoading ? (
+            "Loading..."
+          ) : error ? (
+            <span style={{ color: "red" }}>{error.message}</span>
+          ) : (
+            <>
+              Press <strong>Enter</strong> to load player
+            </>
+          )}
+        </span>
+      </div>
+
+      <div style={{ flex: 1 }}>
+        {isLoading && !playerData && (
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
-              gap: "8px",
+              justifyContent: "center",
+              height: "100%",
+              padding: "24px",
             }}
           >
-            <input
-              type="text"
-              value={assetId}
-              onChange={(e) => setAssetId(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Enter Asset ID"
-              disabled={isLoading}
-              style={{
-                padding: "10px 16px",
-                fontSize: "16px",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-                width: "320px",
-                outline: "none",
-              }}
-            />
-            <span style={{ fontSize: "13px", color: "#888" }}>
-              {isLoading ? (
-                "Loading..."
-              ) : error ? (
-                <span style={{ color: "red" }}>{error.message}</span>
-              ) : (
-                <>
-                  Press <strong>Enter</strong> to load player
-                </>
-              )}
-            </span>
+            <VideoPlayerSkeleton />
           </div>
-          {isLoading && <VideoPlayerSkeleton />}
-        </div>
-      )}
+        )}
 
-      {playerData && (
-        <TCEPlayer
-          accessToken={playerData.accessToken}
-          expiryTime={playerData.expiryTime}
-          expiresIn={playerData.expiresIn}
-          asset={playerData.asset}
-        />
-      )}
+        {playerData && (
+          <TCEPlayer
+            accessToken={playerData.accessToken}
+            expiryTime={playerData.expiryTime}
+            expiresIn={playerData.expiresIn}
+            asset={playerData.asset}
+          />
+        )}
+      </div>
     </div>
   );
 }
