@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { useTokenRefresh } from "~/lib/tce-queries";
 
 const TCEPlayer = ({
   accessToken,
@@ -125,29 +124,6 @@ const TCEPlayer = ({
 
     loadResources();
   }, [loadScript, loadStyle]);
-
-  // Automatic token refresh via TanStack Query
-  const { data: refreshedToken } = useTokenRefresh(expiresIn);
-
-  useEffect(() => {
-    if (!refreshedToken) return;
-
-    const playerId = tcePlayerIdRef.current;
-    if (!playerId) return;
-
-    const angularReference = window.angularReference?.[playerId];
-    if (!angularReference) return;
-
-    angularReference.zone.run(() => {
-      angularReference.tceplayerTokenFn({
-        detail: {
-          access_token: refreshedToken.accessToken,
-          access_token_expiry_time: refreshedToken.expiryTime,
-          access_token_gen_time: refreshedToken.expiresIn,
-        },
-      });
-    });
-  }, [refreshedToken]);
 
   const handleLoadPlayer = useCallback(
     (event: CustomEvent<string>) => {
@@ -284,8 +260,7 @@ const TCEPlayer = ({
       style={{
         position: "relative",
         backgroundColor: "transparent",
-        margin: "0 1vw",
-        height: "calc(100vh - 100px)",
+        height: "100%",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -297,10 +272,12 @@ const TCEPlayer = ({
         style={{
           width: "100%",
           flex: 1,
+          display: "flex",
+          justifyContent: "center",
           backgroundColor: isFullscreen ? "#000" : "transparent",
         }}
       >
-        <div ref={playerContainerRef} className="absolute w-[993px]" />
+        <div ref={playerContainerRef} className="absolute inset-0 mx-auto" />
       </div>
       <button
         onClick={handleFullscreen}

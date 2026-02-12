@@ -6,6 +6,7 @@ import {
   useSearchParams,
   useOutletContext,
 } from "react-router";
+import { Button, Input, Spinner } from "@heroui/react";
 import { redirectToLogin, logout } from "~/lib/auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
 import TCEPlayer from "~/components/TCEPlayer";
@@ -38,10 +39,8 @@ export default function Asset() {
 
   const [inputValue, setInputValue] = useState(paramAssetId || "");
 
-  // Find the asset in batch data when navigated from grid
   const gridAsset = batchData?.assets.find((a) => a.assetId === paramAssetId);
 
-  // Only fetch individual data when NOT from grid
   const {
     data: playerData,
     isLoading,
@@ -60,7 +59,6 @@ export default function Asset() {
     }
   };
 
-  // Dialog mode: navigated from grid with batch data available
   if (fromGrid && gridAsset && batchData) {
     return (
       <PlayerDialog
@@ -73,72 +71,39 @@ export default function Asset() {
     );
   }
 
-  const navButtonStyle: React.CSSProperties = {
-    background: "none",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    padding: "6px 12px",
-    fontSize: "13px",
-    cursor: "pointer",
-    color: "#555",
-  };
-
-  // Full page mode: direct navigation
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          padding: "12px 16px",
-        }}
-      >
-        <button style={navButtonStyle} onClick={() => navigate("/")}>
+    <div className="flex h-screen flex-col bg-background">
+      {/* Navigation bar */}
+      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3">
+        <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
           Home
-        </button>
-        <button style={navButtonStyle} onClick={logout}>
+        </Button>
+        <Button variant="ghost" size="sm" onPress={logout}>
           Logout
-        </button>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "8px",
-          padding: "16px 24px",
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
+        </Button>
+      </nav>
+
+      {/* Header section */}
+      <div className="flex flex-col items-center gap-3 px-6 py-5">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Preview TCE Asset
         </h1>
-        <input
-          type="text"
+        <Input
+          className="w-80"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter Asset ID"
           disabled={isLoading}
-          style={{
-            padding: "10px 16px",
-            fontSize: "16px",
-            border: "1px solid #ccc",
-            borderRadius: "6px",
-            width: "320px",
-            outline: "none",
-          }}
         />
-        <span style={{ fontSize: "13px", color: "#888" }}>
+        <span className="text-sm text-muted">
           {isLoading ? (
-            "Loading..."
+            <span className="flex items-center gap-2">
+              <Spinner size="sm" />
+              Loading...
+            </span>
           ) : error ? (
-            <span style={{ color: "red" }}>{error.message}</span>
+            <span className="text-danger">{error.message}</span>
           ) : (
             <>
               Press <strong>Enter</strong> to load player
@@ -147,17 +112,10 @@ export default function Asset() {
         </span>
       </div>
 
-      <div style={{ flex: 1 }}>
+      {/* Player area */}
+      <div className="flex-1">
         {isLoading && !playerData && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              padding: "24px",
-            }}
-          >
+          <div className="flex h-full items-center justify-center p-6">
             <VideoPlayerSkeleton />
           </div>
         )}

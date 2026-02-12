@@ -1,110 +1,32 @@
-import type { CSSProperties } from "react";
+import { Skeleton } from "@heroui/react";
 
 interface VideoPlayerSkeletonProps {
   maxWidth?: string;
-  style?: CSSProperties;
 }
 
 export default function VideoPlayerSkeleton({
   maxWidth = "960px",
-  style,
 }: VideoPlayerSkeletonProps) {
   return (
     <div
-      style={{
-        width: "100%",
-        maxWidth,
-        aspectRatio: "16 / 9",
-        backgroundColor: "#1a1a1a",
-        borderRadius: "8px",
-        position: "relative",
-        overflow: "hidden",
-        ...style,
-      }}
+      className="relative w-full overflow-hidden rounded-xl bg-black/90"
+      style={{ maxWidth, aspectRatio: "16 / 9" }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)",
-          animation: "shimmer 1.5s infinite",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "12px",
-        }}
-      >
-        <div
-          style={{
-            width: "56px",
-            height: "56px",
-            borderRadius: "50%",
-            backgroundColor: "rgba(255,255,255,0.1)",
-          }}
-        />
-        <div
-          style={{
-            width: "120px",
-            height: "12px",
-            borderRadius: "6px",
-            backgroundColor: "rgba(255,255,255,0.08)",
-          }}
-        />
+      {/* Main shimmer area */}
+      <Skeleton className="absolute inset-0 rounded-none" />
+
+      {/* Play button placeholder */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+        <div className="h-14 w-14 rounded-full bg-white/10" />
+        <div className="h-3 w-28 rounded-md bg-white/8" />
       </div>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "40px",
-          backgroundColor: "rgba(255,255,255,0.05)",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 12px",
-          gap: "10px",
-        }}
-      >
-        <div
-          style={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "4px",
-            backgroundColor: "rgba(255,255,255,0.1)",
-          }}
-        />
-        <div
-          style={{
-            flex: 1,
-            height: "4px",
-            borderRadius: "2px",
-            backgroundColor: "rgba(255,255,255,0.1)",
-          }}
-        />
-        <div
-          style={{
-            width: "48px",
-            height: "12px",
-            borderRadius: "6px",
-            backgroundColor: "rgba(255,255,255,0.08)",
-          }}
-        />
+
+      {/* Controls bar placeholder */}
+      <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2.5 bg-white/5 px-3 py-2">
+        <div className="h-6 w-6 rounded bg-white/10" />
+        <div className="h-1 flex-1 rounded-full bg-white/10" />
+        <div className="h-3 w-12 rounded-md bg-white/8" />
       </div>
-      <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-      `}</style>
     </div>
   );
 }

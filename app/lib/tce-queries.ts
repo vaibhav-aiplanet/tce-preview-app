@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   fetchClientId,
   fetchToken,
@@ -64,30 +64,4 @@ export function useBatchAssetData(assetIds: string[]) {
     isLoading: query.isLoading,
     error: query.error,
   };
-}
-
-export function useTokenRefresh(expiresIn: number) {
-  const queryClient = useQueryClient();
-
-  return useQuery({
-    queryKey: ["tce-token-refresh"],
-    queryFn: fetchAuth,
-    enabled: false,
-    refetchInterval: expiresIn > 0 ? expiresIn * 1000 * 0.8 : false,
-    refetchIntervalInBackground: true,
-    initialData: () => {
-      // Seed from the initial player data query to avoid a duplicate fetch on mount
-      const cached = queryClient.getQueriesData<{
-        accessToken: string;
-        expiryTime: number;
-        expiresIn: number;
-      }>({ queryKey: ["tce-player-data"] });
-      const entry = cached.find(([, data]) => data != null);
-      if (entry?.[1]) {
-        const { accessToken, expiryTime, expiresIn } = entry[1];
-        return { accessToken, expiryTime, expiresIn };
-      }
-      return undefined;
-    },
-  });
 }

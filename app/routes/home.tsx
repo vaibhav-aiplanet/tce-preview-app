@@ -7,10 +7,11 @@ import {
   useMatches,
   useSearchParams,
 } from "react-router";
+import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
 import { ensureAuthenticated, logout } from "~/lib/auth";
 import { useBatchAssetData } from "~/lib/tce-queries";
-import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
 import AssetGrid from "~/components/AssetGrid";
+import AssetGridSkeleton from "~/components/AssetGridSkeleton";
 
 type Manifest = Record<string, { name: string; path: string }[]>;
 
@@ -63,7 +64,6 @@ export default function Home() {
     }
   }, []);
 
-  // Auto-load when book param is present (e.g. on page load / shared URL)
   useEffect(() => {
     if (selectedFile) {
       loadAssetIds(selectedFile);
@@ -88,14 +88,10 @@ export default function Home() {
     error: batchError,
   } = useBatchAssetData(batchAssetIds);
 
-  // Check if we're on /:assetId from grid (dialog mode) vs direct navigation
   const fromGrid = location.state?.fromGrid === true;
   const matches = useMatches();
-  // If any match has params.assetId, we're on the asset child route
   const isAssetRoute = matches.some((m) => "assetId" in m.params);
 
-  // Show layout content on index route, or on asset route when navigated from grid (dialog overlay)
-  // Hide layout when asset route is active without grid context (direct nav / refresh)
   const showLayoutContent = !isAssetRoute || (fromGrid && !!batchData);
 
   const onAssetSelect = (asset: TCEAsset) =>
@@ -109,135 +105,100 @@ export default function Home() {
     return <Outlet context={{ batchData }} />;
   }
 
-  const navButtonStyle: React.CSSProperties = {
-    background: "none",
-    border: "1px solid #ddd",
-    borderRadius: "6px",
-    padding: "6px 12px",
-    fontSize: "13px",
-    cursor: "pointer",
-    color: "#555",
-  };
-
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          padding: "12px 16px",
-        }}
-      >
-        <button style={navButtonStyle} onClick={() => navigate("/")}>
+    <div className="flex h-screen flex-col bg-background">
+      {/* Navigation bar */}
+      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3">
+        <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
           Home
-        </button>
-        <button style={navButtonStyle} onClick={logout}>
+        </Button>
+        <Button variant="ghost" size="sm" onPress={logout}>
           Logout
-        </button>
-      </div>
+        </Button>
+      </nav>
+
+      {/* Header section */}
       <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "8px",
-          padding: "16px 24px",
-          ...(showIdleState ? { flex: 1, justifyContent: "center" } : {}),
-        }}
+        className={`flex flex-col items-center gap-3 px-6 py-5 ${showIdleState ? "flex-1 justify-center" : ""}`}
       >
-        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 600 }}>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Preview TCE Assets
         </h1>
 
         {manifest && grades.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              alignItems: "center",
-              marginTop: "8px",
-            }}
-          >
-            <select
-              value={selectedGrade}
-              onChange={(e) => handleGradeChange(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                fontSize: "14px",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-                outline: "none",
-              }}
+          <div className="flex flex-wrap items-end gap-3 mt-1">
+            <Select
+              className="w-[180px]"
+              placeholder="Select Grade"
+              value={selectedGrade || null}
+              onChange={(value) => handleGradeChange(String(value ?? ""))}
             >
-              <option value="">Select Grade</option>
-              {grades.map((g) => (
-                <option key={g} value={g}>
-                  Grade {g}
-                </option>
-              ))}
-            </select>
+              <Label>Grade</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {grades.map((g) => (
+                    <ListBox.Item key={g} id={g} textValue={`Grade ${g}`}>
+                      Grade {g}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
 
             {filesForGrade.length > 0 && (
-              <select
-                value={selectedFile}
-                onChange={(e) => handleBookChange(e.target.value)}
-                style={{
-                  padding: "8px 12px",
-                  fontSize: "14px",
-                  border: "1px solid #ccc",
-                  borderRadius: "6px",
-                  outline: "none",
-                  maxWidth: "320px",
-                }}
+              <Select
+                className="w-[280px]"
+                placeholder="Select Book"
+                value={selectedFile || null}
+                onChange={(value) => handleBookChange(String(value ?? ""))}
               >
-                <option value="">Select Book</option>
-                {filesForGrade.map((f) => (
-                  <option key={f.path} value={f.path}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+                <Label>Book</Label>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {filesForGrade.map((f) => (
+                      <ListBox.Item key={f.path} id={f.path} textValue={f.name}>
+                        {f.name}
+                        <ListBox.ItemIndicator />
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             )}
 
             {fileLoading && (
-              <span style={{ fontSize: "13px", color: "#888" }}>
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <Spinner size="sm" />
                 Loading...
-              </span>
+              </div>
             )}
           </div>
         )}
 
         {isBatchLoading && (
-          <span style={{ fontSize: "13px", color: "#888" }}>
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <Spinner size="sm" />
             Loading assets...
-          </span>
+          </div>
         )}
         {batchError && (
-          <span style={{ fontSize: "13px", color: "red" }}>
-            {batchError.message}
-          </span>
+          <p className="text-sm text-danger">{batchError.message}</p>
         )}
       </div>
 
-      <div style={{ flex: 1, overflow: "auto" }}>
+      {/* Content area */}
+      <div className="flex-1 overflow-auto">
         {isBatchLoading && !batchData && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
-              padding: "24px",
-            }}
-          >
-            <VideoPlayerSkeleton />
-          </div>
+          <AssetGridSkeleton count={batchAssetIds.length || 12} />
         )}
 
         {batchData && batchData.assets.length > 0 && (

@@ -47,31 +47,20 @@ export default function ExcelUpload({ onUpload }: ExcelUploadProps) {
   });
 
   return (
-    <div style={{ width: "320px" }}>
+    <div className="w-80">
       <div
         {...getRootProps()}
-        style={{
-          border: `2px dashed ${isDragActive ? "#1976d2" : "#ccc"}`,
-          borderRadius: "6px",
-          padding: "20px",
-          textAlign: "center",
-          cursor: "pointer",
-          backgroundColor: isDragActive ? "#e3f2fd" : "transparent",
-          transition: "all 0.2s",
-        }}
+        className={`cursor-pointer rounded-xl border-2 border-dashed p-5 text-center transition-all ${
+          isDragActive
+            ? "border-accent bg-accent/5"
+            : "border-border/60 hover:border-border"
+        }`}
       >
         <input {...getInputProps()} />
         <p
-          style={{
-            margin: 0,
-            fontSize: "14px",
-            color: fileName ? "#333" : "#666",
-            fontWeight: fileName ? 500 : 400,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            maxWidth: "100%",
-          }}
+          className={`m-0 truncate text-sm ${
+            fileName ? "font-medium text-foreground" : "text-muted"
+          }`}
         >
           {isDragActive
             ? "Drop the file here"
@@ -79,17 +68,13 @@ export default function ExcelUpload({ onUpload }: ExcelUploadProps) {
               ? fileName
               : "Drag & drop an Excel file here, or click to browse"}
         </p>
-        <p style={{ margin: "4px 0 0", fontSize: "12px", color: "#999" }}>
+        <p className="mt-1 text-xs text-muted">
           {fileName
             ? `${assetCount} asset${assetCount !== 1 ? "s" : ""} found — click or drop to replace`
             : ".xls, .xlsx"}
         </p>
       </div>
-      {error && (
-        <p style={{ margin: "6px 0 0", fontSize: "13px", color: "red" }}>
-          {error}
-        </p>
-      )}
+      {error && <p className="mt-1.5 text-sm text-danger">{error}</p>}
     </div>
   );
 }

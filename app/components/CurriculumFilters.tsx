@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
 import {
   fetchSubjects,
   fetchChapters,
@@ -12,15 +13,6 @@ interface CurriculumFiltersProps {
   assetId: string;
 }
 
-const selectStyle: React.CSSProperties = {
-  padding: "6px 10px",
-  fontSize: "13px",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-  outline: "none",
-  minWidth: "140px",
-};
-
 export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   const [subjects, setSubjects] = useState<CurriculumItem[]>([]);
   const [chapters, setChapters] = useState<CurriculumItem[]>([]);
@@ -32,7 +24,6 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   const [isMapped, setIsMapped] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Load subjects and existing mapping on mount / asset change
   useEffect(() => {
     fetchSubjects().then(setSubjects);
 
@@ -91,91 +82,99 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: "8px",
-        padding: "8px 16px",
-        borderBottom: "1px solid #e0e0e0",
-        alignItems: "center",
-        flexWrap: "wrap",
-      }}
-    >
-      <span style={{ fontSize: "12px", color: "#888", fontWeight: 500 }}>
+    <div className="flex flex-wrap items-end gap-3 border-b border-border/40 px-4 py-3">
+      <span className="self-center text-xs font-medium text-muted">
         Map to:
       </span>
 
-      <select
-        value={selectedSubject}
-        onChange={(e) => {
-          setSelectedSubject(e.target.value);
+      <Select
+        className="w-[160px]"
+        placeholder="Subject"
+        value={selectedSubject || null}
+        onChange={(value) => {
+          setSelectedSubject(String(value ?? ""));
           setSelectedChapter("");
           setSelectedSubtopic("");
         }}
-        style={selectStyle}
       >
-        <option value="">Select Subject</option>
-        {subjects.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {subjects.map((s) => (
+              <ListBox.Item key={s.id} id={s.id} textValue={s.name}>
+                {s.name}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
 
-      <select
-        value={selectedChapter}
-        onChange={(e) => {
-          setSelectedChapter(e.target.value);
+      <Select
+        className="w-[160px]"
+        placeholder="Chapter"
+        isDisabled={!selectedSubject}
+        value={selectedChapter || null}
+        onChange={(value) => {
+          setSelectedChapter(String(value ?? ""));
           setSelectedSubtopic("");
         }}
-        disabled={!selectedSubject}
-        style={{
-          ...selectStyle,
-          opacity: selectedSubject ? 1 : 0.5,
-        }}
       >
-        <option value="">Select Chapter</option>
-        {chapters.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {chapters.map((c) => (
+              <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
+                {c.name}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
 
-      <select
-        value={selectedSubtopic}
-        onChange={(e) => setSelectedSubtopic(e.target.value)}
-        disabled={!selectedChapter}
-        style={{
-          ...selectStyle,
-          opacity: selectedChapter ? 1 : 0.5,
-        }}
+      <Select
+        className="w-[160px]"
+        placeholder="Subtopic"
+        isDisabled={!selectedChapter}
+        value={selectedSubtopic || null}
+        onChange={(value) => setSelectedSubtopic(String(value ?? ""))}
       >
-        <option value="">Select Subtopic</option>
-        {subtopics.map((st) => (
-          <option key={st.id} value={st.id}>
-            {st.name}
-          </option>
-        ))}
-      </select>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {subtopics.map((st) => (
+              <ListBox.Item key={st.id} id={st.id} textValue={st.name}>
+                {st.name}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
 
-      <button
-        onClick={handleSave}
-        disabled={!canSave || saving}
-        style={{
-          padding: "6px 14px",
-          fontSize: "13px",
-          fontWeight: 500,
-          border: "none",
-          borderRadius: "6px",
-          cursor: canSave && !saving ? "pointer" : "default",
-          backgroundColor: canSave ? "#1976d2" : "#ccc",
-          color: "#fff",
-          opacity: saving ? 0.7 : 1,
-        }}
+      <Button
+        size="sm"
+        onPress={handleSave}
+        isDisabled={!canSave || saving}
+        isPending={saving}
       >
-        {saving ? "Saving..." : isMapped ? "Update Mapping" : "Add Mapping"}
-      </button>
+        {({ isPending }) => (
+          <>
+            {isPending && <Spinner color="current" size="sm" />}
+            {saving ? "Saving..." : isMapped ? "Update Mapping" : "Add Mapping"}
+          </>
+        )}
+      </Button>
     </div>
   );
 }

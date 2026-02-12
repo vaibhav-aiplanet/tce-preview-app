@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { Input, Spinner } from "@heroui/react";
 import ExcelUpload from "~/components/ExcelUpload";
 
 interface ManualAssetInputProps {
@@ -35,26 +36,21 @@ export default function ManualAssetInput({
 
   return (
     <>
-      <input
-        type="text"
+      <Input
+        className="w-80"
         value={assetId}
         onChange={(e) => setAssetId(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Enter Asset ID"
-        style={{
-          padding: "10px 16px",
-          fontSize: "16px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          width: "320px",
-          outline: "none",
-        }}
       />
-      <span style={{ fontSize: "13px", color: "#888" }}>
+      <span className="text-sm text-muted">
         {isBatchLoading ? (
-          "Loading..."
+          <span className="flex items-center gap-2">
+            <Spinner size="sm" />
+            Loading...
+          </span>
         ) : batchError ? (
-          <span style={{ color: "red" }}>{batchError.message}</span>
+          <span className="text-danger">{batchError.message}</span>
         ) : (
           <>
             Press <strong>Enter</strong> to load player
