@@ -14,10 +14,14 @@ interface CurriculumFiltersProps {
 }
 
 export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
+  const [boards, setBoards] = useState<CurriculumItem[]>([]);
+  const [grades, setGrades] = useState<CurriculumItem[]>([]);
   const [subjects, setSubjects] = useState<CurriculumItem[]>([]);
   const [chapters, setChapters] = useState<CurriculumItem[]>([]);
   const [subtopics, setSubtopics] = useState<CurriculumItem[]>([]);
 
+  const [selectedBoard, setSelectedBoard] = useState("");
+  const [selectedGrade, setSelectedGrade] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedChapter, setSelectedChapter] = useState("");
   const [selectedSubtopic, setSelectedSubtopic] = useState("");
@@ -25,11 +29,21 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchSubjects().then(setSubjects);
+    Promise.all([
+      fetch("/_api/boards").then((r) => r.json()),
+      fetch("/_api/grades").then((r) => r.json()),
+      fetchSubjects(),
+    ]).then(([boardsData, gradesData, subjectsData]) => {
+      setBoards(boardsData);
+      setGrades(gradesData);
+      setSubjects(subjectsData);
+    });
 
     fetchMapping(assetId).then(async (mapping) => {
       if (!mapping) {
         setIsMapped(false);
+        setSelectedBoard("");
+        setSelectedGrade("");
         setSelectedSubject("");
         setSelectedChapter("");
         setSelectedSubtopic("");
@@ -45,7 +59,7 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
       setChapters(ch);
       setSelectedChapter(mapping.chapterId);
 
-      const st = await fetchSubtopics(mapping.chapterId);
+      const st = await fetchSubtopics(mapping.subjectId);
       setSubtopics(st);
       setSelectedSubtopic(mapping.subtopicId);
     });
@@ -60,25 +74,38 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   }, [selectedSubject]);
 
   useEffect(() => {
-    if (!selectedChapter) {
+    if (!selectedSubject) {
       setSubtopics([]);
       return;
     }
-    fetchSubtopics(selectedChapter).then(setSubtopics);
-  }, [selectedChapter]);
+    fetchSubtopics(selectedSubject).then(setSubtopics);
+  }, [selectedSubject]);
 
-  const canSave = selectedSubject && selectedChapter && selectedSubtopic;
+  const canSave = selectedSubject && selectedChapter;
 
   const handleSave = async () => {
-    if (!canSave) return;
-    setSaving(true);
-    await saveMapping(assetId, {
-      subjectId: selectedSubject,
-      chapterId: selectedChapter,
-      subtopicId: selectedSubtopic,
-    });
-    setIsMapped(true);
-    setSaving(false);
+    try {
+      if (!canSave) return;
+      setSaving(true);
+
+      const profile_data = JSON.parse(
+        sessionStorage.getItem("profile") || "{}",
+      );
+
+      await saveMapping(assetId, {
+        gradeId: selectedGrade,
+        subjectId: selectedSubject,
+        chapterId: selectedChapter,
+        subtopicId: selectedSubtopic,
+        createdBy: profile_data.userName,
+      });
+      setIsMapped(true);
+      setSaving(false);
+    } catch (error) {
+      console.error(error);
+      setIsMapped(false);
+      setSaving(false);
+    }
   };
 
   return (
@@ -88,7 +115,55 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
       </span>
 
       <Select
-        className="w-[160px]"
+        className="w-32 data-[placeholder=true]:truncate"
+        placeholder="Board"
+        value={selectedBoard || null}
+        onChange={(value) => {
+          setSelectedBoard(String(value ?? ""));
+        }}
+      >
+        <Select.Trigger>
+          <Select.Value className="truncate" />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {boards.map((b) => (
+              <ListBox.Item key={b.id} id={b.id} textValue={b.name}>
+                {b.name}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
+
+      <Select
+        className="w-32 data-[placeholder=true]:truncate"
+        placeholder="Grade"
+        value={selectedGrade || null}
+        onChange={(value) => {
+          setSelectedGrade(String(value ?? ""));
+        }}
+      >
+        <Select.Trigger>
+          <Select.Value className="truncate" />
+          <Select.Indicator />
+        </Select.Trigger>
+        <Select.Popover>
+          <ListBox>
+            {grades.map((g) => (
+              <ListBox.Item key={g.id} id={g.id} textValue={g.name}>
+                {g.name}
+                <ListBox.ItemIndicator />
+              </ListBox.Item>
+            ))}
+          </ListBox>
+        </Select.Popover>
+      </Select>
+
+      <Select
+        className="w-40"
         placeholder="Subject"
         value={selectedSubject || null}
         onChange={(value) => {
@@ -98,7 +173,7 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
         }}
       >
         <Select.Trigger>
-          <Select.Value />
+          <Select.Value className="truncate" />
           <Select.Indicator />
         </Select.Trigger>
         <Select.Popover>
@@ -114,7 +189,7 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
       </Select>
 
       <Select
-        className="w-[160px]"
+        className="w-48"
         placeholder="Chapter"
         isDisabled={!selectedSubject}
         value={selectedChapter || null}
@@ -124,7 +199,7 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
         }}
       >
         <Select.Trigger>
-          <Select.Value />
+          <Select.Value className="truncate" />
           <Select.Indicator />
         </Select.Trigger>
         <Select.Popover>
@@ -140,14 +215,14 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
       </Select>
 
       <Select
-        className="w-[160px]"
+        className="w-40"
         placeholder="Subtopic"
         isDisabled={!selectedChapter}
         value={selectedSubtopic || null}
         onChange={(value) => setSelectedSubtopic(String(value ?? ""))}
       >
         <Select.Trigger>
-          <Select.Value />
+          <Select.Value className="truncate" />
           <Select.Indicator />
         </Select.Trigger>
         <Select.Popover>

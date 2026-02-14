@@ -9,8 +9,7 @@ export function redirectToLogin() {
 }
 
 export function logout() {
-  sessionStorage.removeItem("token");
-  sessionStorage.removeItem("refreshToken");
+  sessionStorage.clear();
   redirectToLogin();
 }
 
@@ -24,6 +23,7 @@ export async function validateToken(): Promise<TokenValidateResponse> {
       },
     },
   );
+  sessionStorage.setItem("profile", JSON.stringify(response.data.userInfo));
   return response.data;
 }
 

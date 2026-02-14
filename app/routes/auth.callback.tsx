@@ -1,89 +1,73 @@
+import { useEffect } from "react";
+import { useNavigate, useLoaderData, data } from "react-router";
 import axios from "axios";
-import { env } from "~/lib/env";
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { Button, Spinner } from "@heroui/react";
 import { redirectToLogin } from "~/lib/auth";
+import { env } from "~/lib/env";
+import type { Route } from "./+types/auth.callback";
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+
+  if (!code) {
+    return data({ error: "Missing authorization code" }, { status: 400 });
+  }
+
+  try {
+    const response = await axios.post<OAuthTokenResponse>(
+      `${env.api_proxy_target}/api/v1/api/user/oauth/token`,
+      {
+        code,
+        clientId: "TCE-TEST-APP",
+        redirectUri: `${url.origin}/auth/callback`,
+        grantType: "authorization_code",
+      },
+    );
+
+    return {
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+      userInfo: response.data.userInfo,
+    };
+  } catch (err) {
+    const message = axios.isAxiosError(err)
+      ? err.response?.data?.message || "Token exchange failed"
+      : "Something went wrong. Please try again.";
+
+    return data({ error: message }, { status: 500 });
+  }
+}
 
 export default function AuthCallback() {
-  const [searchParams] = useSearchParams();
+  const loaderData = useLoaderData<typeof loader>();
   const navigate = useNavigate();
-  const [error, setError] = useState("");
+
+  const error = "error" in loaderData ? loaderData.error : null;
 
   useEffect(() => {
-    const code = searchParams.get("code");
+    if (error || !("accessToken" in loaderData)) return;
 
-    if (!code) {
-      setError("Missing authorization code");
-      return;
-    }
-
-    const exchangeToken = async () => {
-      try {
-        const response = await axios.post<OAuthTokenResponse>(
-          `${env.api_url}/v1/api/user/oauth/token`,
-          {
-            code,
-            clientId: "TCE-TEST-APP",
-            redirectUri: `${window.location.origin}/auth/callback`,
-            grantType: "authorization_code",
-          },
-        );
-
-        sessionStorage.setItem("token", response.data.accessToken);
-        sessionStorage.setItem("refreshToken", response.data.refreshToken);
-        navigate("/");
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || "Token exchange failed");
-        } else {
-          setError("Something went wrong. Please try again.");
-        }
-      }
-    };
-
-    exchangeToken();
-  }, [searchParams, navigate]);
+    sessionStorage.setItem("token", loaderData.accessToken);
+    sessionStorage.setItem("refreshToken", loaderData.refreshToken);
+    sessionStorage.setItem("profile", JSON.stringify(loaderData.userInfo));
+    navigate("/");
+  }, [loaderData, error, navigate]);
 
   if (error) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100vh",
-          gap: "12px",
-        }}
-      >
-        <span style={{ color: "red" }}>{error}</span>
-        <button
-          onClick={redirectToLogin}
-          style={{
-            padding: "8px 16px",
-            fontSize: "14px",
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
+      <div className="flex h-screen flex-col items-center justify-center gap-3">
+        <p className="text-sm text-danger">{error}</p>
+        <Button variant="secondary" onPress={redirectToLogin}>
           Go to Login
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-      }}
-    >
+    <div className="flex h-screen items-center justify-center gap-2 text-muted">
+      <Spinner size="sm" />
       Logging in...
     </div>
   );

@@ -1,52 +1,66 @@
 import { z } from "zod";
 
-const envSchema = z.object({
-  api_url: z.string(),
-  api_proxy_target: z.url(),
-  login_url: z.url(),
-  tce_url: z.url(),
+const privateSchema = z
+  .object({
+    DB_HOSTNAME: z.string().optional(),
+    DB_PASSWORD: z.string().optional(),
+    DB_USER: z.string().optional(),
 
-  master_db_url: z.string(),
-  users_db_url: z.string(),
-  content_db_url: z.string(),
-});
+    MASTER_DB: z.string().optional(),
+    USERS_DB: z.string().optional(),
+    CONTENT_DB: z.string().optional(),
+  })
+  .transform((e) => {
+    const db_host = e.DB_HOSTNAME;
+    const db_pass = e.DB_PASSWORD;
+    const db_user = e.DB_USER;
 
-const viteEnvSchema = z
+    function db_url_builder(db_name: string) {
+      if (!db_host || !db_pass || !db_user || !db_name) {
+        return "";
+      }
+      return `postgresql://${db_user}:${db_pass}@${db_host}/${db_name}`;
+    }
+
+    return {
+      master_db_url: db_url_builder(e.MASTER_DB ?? ""),
+      users_db_url: db_url_builder(e.USERS_DB ?? ""),
+      content_db_url: db_url_builder(e.CONTENT_DB ?? ""),
+    };
+  });
+
+const publicSchema = z
   .object({
     VITE_API_URL: z.string(),
     VITE_API_PROXY_TARGET: z.url(),
     VITE_LOGIN_BASE_URL: z.url(),
     VITE_TCE_API_BASE_URL: z.url(),
-
-    VITE_DB_HOSTNAME: z.string(),
-    VITE_DB_PASSWORD: z.string(),
-    VITE_DB_USER: z.string(),
-
-    VITE_MASTER_DB: z.string(),
-    VITE_USERS_DB: z.string(),
-    VITE_CONTENT_DB: z.string(),
   })
   .transform((e) => {
-    const db_host = e.VITE_DB_HOSTNAME;
-    const db_pass = e.VITE_DB_PASSWORD;
-    const db_user = e.VITE_DB_USER;
-
-    function db_url_builder(db_name: string) {
-      return `postgresql://${db_user}:${db_pass}@${db_host}/${db_name}`;
-    }
-
     return {
-      master_db_url: db_url_builder(e.VITE_MASTER_DB),
-      users_db_url: db_url_builder(e.VITE_USERS_DB),
-      content_db_url: db_url_builder(e.VITE_CONTENT_DB),
-
       api_url: e.VITE_API_URL,
       api_proxy_target: e.VITE_API_PROXY_TARGET,
       login_url: e.VITE_LOGIN_BASE_URL,
       tce_url: e.VITE_TCE_API_BASE_URL,
     };
-  })
-  .pipe(envSchema);
+  });
 
-export type Env = z.infer<typeof envSchema>;
-export const env = viteEnvSchema.parse(import.meta.env);
+const getProcessEnv = () => {
+  if (typeof process !== "undefined" && process.env) {
+    return process.env;
+  }
+  return {
+    DB_HOSTNAME: "",
+    DB_PASSWORD: "",
+    DB_USER: "",
+    MASTER_DB: "",
+    CONTENT_DB: "",
+    USERS_DB: "",
+  };
+};
+
+export type Env = z.infer<typeof publicSchema>;
+export const env = {
+  ...publicSchema.parse(import.meta.env),
+  ...privateSchema.parse(getProcessEnv()),
+};

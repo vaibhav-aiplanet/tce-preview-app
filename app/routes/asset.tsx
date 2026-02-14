@@ -1,17 +1,17 @@
+import { Button, Input, Spinner } from "@heroui/react";
 import { useState } from "react";
 import {
-  useParams,
-  useNavigate,
   useLocation,
-  useSearchParams,
+  useNavigate,
   useOutletContext,
+  useParams,
+  useSearchParams,
 } from "react-router";
-import { Button, Input, Spinner } from "@heroui/react";
-import { redirectToLogin, logout } from "~/lib/auth";
-import { useTCEPlayerData } from "~/lib/tce-queries";
-import TCEPlayer from "~/components/TCEPlayer";
 import PlayerDialog from "~/components/PlayerDialog";
+import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
+import { logout, redirectToLogin } from "~/lib/auth";
+import { useTCEPlayerData } from "~/lib/tce-queries";
 
 interface OutletContextType {
   batchData: {
@@ -35,10 +35,9 @@ export default function Asset() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { batchData } = useOutletContext<OutletContextType>();
-  const fromGrid = location.state?.fromGrid === true;
-
   const [inputValue, setInputValue] = useState(paramAssetId || "");
 
+  const fromGrid = location.state?.fromGrid === true;
   const gridAsset = batchData?.assets.find((a) => a.assetId === paramAssetId);
 
   const {
@@ -74,7 +73,7 @@ export default function Asset() {
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* Navigation bar */}
-      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3">
+      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3 mb-3">
         <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
           Home
         </Button>

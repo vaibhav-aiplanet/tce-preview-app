@@ -262,38 +262,25 @@ const TCEPlayer = ({
         backgroundColor: "transparent",
         height: "100%",
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
+      <button
+        onClick={handleFullscreen}
+        className="absolute top-2 right-2 z-10 cursor-pointer rounded-md bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-sm transition-colors hover:bg-black/80"
+      >
+        {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+      </button>
       <div
         ref={playerWrapperRef}
         id="parentId"
         style={{
           width: "100%",
-          flex: 1,
-          display: "flex",
-          justifyContent: "center",
+          height: "100%",
           backgroundColor: isFullscreen ? "#000" : "transparent",
         }}
       >
         <div ref={playerContainerRef} className="absolute inset-0 mx-auto" />
       </div>
-      <button
-        onClick={handleFullscreen}
-        style={{
-          padding: "8px 16px",
-          marginTop: "10px",
-          backgroundColor: "#1976d2",
-          color: "#fff",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          alignSelf: "center",
-        }}
-      >
-        {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-      </button>
     </div>
   );
 };

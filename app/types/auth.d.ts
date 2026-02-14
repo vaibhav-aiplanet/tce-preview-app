@@ -29,7 +29,7 @@ interface TokenValidateResponse {
   user_id: string;
   client_id: string;
   expires_at: string;
-  user_info: {
+  userInfo: {
     id: string;
     first_name: string;
     last_name: string;

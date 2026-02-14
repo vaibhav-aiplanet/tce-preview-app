@@ -34,6 +34,7 @@ export default function Home() {
   const [batchAssetIds, setBatchAssetIds] = useState<string[]>([]);
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [fileLoading, setFileLoading] = useState(false);
+  const [loadingFilters, setLoadingFilters] = useState(true);
 
   const selectedGrade = searchParams.get("grade") ?? "";
   const selectedFile = searchParams.get("book") ?? "";
@@ -42,12 +43,14 @@ export default function Home() {
     fetch("/azvasa/manifest.json")
       .then((r) => r.json())
       .then((data: Manifest) => setManifest(data))
-      .catch(() => setManifest(null));
+      .catch(() => setManifest(null))
+      .finally(() => setLoadingFilters(false));
   }, []);
 
-  const grades = manifest
+  const gradesFromManifest = manifest
     ? Object.keys(manifest).sort((a, b) => Number(a) - Number(b))
     : [];
+
   const filesForGrade =
     selectedGrade && manifest ? (manifest[selectedGrade] ?? []) : [];
 
@@ -71,7 +74,11 @@ export default function Home() {
   }, [selectedFile, loadAssetIds]);
 
   const handleGradeChange = (grade: string) => {
-    setSearchParams(grade ? { grade } : {});
+    if (grade) {
+      setSearchParams({ grade, book: "" });
+    } else {
+      setSearchParams({});
+    }
   };
 
   const handleBookChange = (book: string) => {
@@ -108,7 +115,7 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* Navigation bar */}
-      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3">
+      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3 mb-3">
         <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
           Home
         </Button>
@@ -119,14 +126,21 @@ export default function Home() {
 
       {/* Header section */}
       <div
-        className={`flex flex-col items-center gap-3 px-6 py-5 ${showIdleState ? "flex-1 justify-center" : ""}`}
+        className={`flex flex-col items-start gap-2 px-6 ${showIdleState ? "flex-1" : ""}`}
       >
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Preview TCE Assets
         </h1>
 
-        {manifest && grades.length > 0 && (
-          <div className="flex flex-wrap items-end gap-3 mt-1">
+        {loadingFilters && (
+          <div className="flex items-center gap-2 text-sm text-muted">
+            <Spinner size="sm" />
+            Loading filters...
+          </div>
+        )}
+
+        {!loadingFilters && gradesFromManifest.length > 0 && (
+          <div className="flex flex-wrap items-start gap-3 mt-1">
             <Select
               className="w-[180px]"
               placeholder="Select Grade"
@@ -140,7 +154,7 @@ export default function Home() {
               </Select.Trigger>
               <Select.Popover>
                 <ListBox>
-                  {grades.map((g) => (
+                  {gradesFromManifest.map((g) => (
                     <ListBox.Item key={g} id={g} textValue={`Grade ${g}`}>
                       Grade {g}
                       <ListBox.ItemIndicator />
@@ -150,30 +164,29 @@ export default function Home() {
               </Select.Popover>
             </Select>
 
-            {filesForGrade.length > 0 && (
-              <Select
-                className="w-[280px]"
-                placeholder="Select Book"
-                value={selectedFile || null}
-                onChange={(value) => handleBookChange(String(value ?? ""))}
-              >
-                <Label>Book</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    {filesForGrade.map((f) => (
-                      <ListBox.Item key={f.path} id={f.path} textValue={f.name}>
-                        {f.name}
-                        <ListBox.ItemIndicator />
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-            )}
+            <Select
+              className="w-[280px] data-[placeholder=true]:truncate"
+              placeholder="Select Book"
+              isDisabled={!selectedGrade}
+              value={selectedGrade ? selectedFile || null : null}
+              onChange={(value) => handleBookChange(String(value ?? ""))}
+            >
+              <Label>Book</Label>
+              <Select.Trigger>
+                <Select.Value />
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {filesForGrade.map((f) => (
+                    <ListBox.Item key={f.path} id={f.path} textValue={f.name}>
+                      {f.name}
+                      <ListBox.ItemIndicator />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
 
             {fileLoading && (
               <div className="flex items-center gap-2 text-sm text-muted">
