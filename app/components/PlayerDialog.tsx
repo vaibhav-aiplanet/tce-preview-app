@@ -31,7 +31,15 @@ export default function PlayerDialog({
           <Modal.Header className="px-4 pt-4 pb-2">
             <Modal.Heading>{asset.title || "Untitled"}</Modal.Heading>
           </Modal.Header>
-          <CurriculumFilters assetId={asset.assetId} />
+          <CurriculumFilters
+            assetId={asset.assetId}
+            asset={{
+              title: asset.title,
+              mimeType: asset.mimeType,
+              assetType: asset.assetType,
+              subType: asset.subType,
+            }}
+          />
           <Modal.Body className="flex-1 overflow-hidden p-0">
             <TCEPlayer
               accessToken={accessToken}

@@ -11,9 +11,18 @@ import {
 
 interface CurriculumFiltersProps {
   assetId: string;
+  asset?: {
+    title: string;
+    mimeType: string;
+    assetType: string;
+    subType: string;
+  };
 }
 
-export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
+export default function CurriculumFilters({
+  assetId,
+  asset,
+}: CurriculumFiltersProps) {
   const [boards, setBoards] = useState<CurriculumItem[]>([]);
   const [grades, setGrades] = useState<CurriculumItem[]>([]);
   const [subjects, setSubjects] = useState<CurriculumItem[]>([]);
@@ -28,15 +37,15 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   const [isMapped, setIsMapped] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const [chaptersDisabled, setChaptersDisabled] = useState(false);
+
   useEffect(() => {
     Promise.all([
       fetch("/_api/boards").then((r) => r.json()),
       fetch("/_api/grades").then((r) => r.json()),
-      fetchSubjects(),
-    ]).then(([boardsData, gradesData, subjectsData]) => {
+    ]).then(([boardsData, gradesData]) => {
       setBoards(boardsData);
       setGrades(gradesData);
-      setSubjects(subjectsData);
     });
 
     fetchMapping(assetId).then(async (mapping) => {
@@ -53,9 +62,14 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
       }
 
       setIsMapped(true);
+      setSelectedGrade(mapping.gradeId || "");
       setSelectedSubject(mapping.subjectId);
 
-      const ch = await fetchChapters(mapping.subjectId);
+      const ch = await fetchChapters(
+        mapping.subjectId,
+        "",
+        mapping.gradeId || "",
+      );
       setChapters(ch);
       setSelectedChapter(mapping.chapterId);
 
@@ -66,12 +80,46 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
   }, [assetId]);
 
   useEffect(() => {
-    if (!selectedSubject) {
+    if (!selectedSubject || !selectedBoard || !selectedGrade) {
       setChapters([]);
+      setSelectedChapter("");
+      setSelectedSubtopic("");
+      setSubtopics([]);
       return;
     }
-    fetchChapters(selectedSubject).then(setChapters);
-  }, [selectedSubject]);
+    fetchChapters(selectedSubject, selectedBoard, selectedGrade).then(
+      (data) => {
+        setChapters(data);
+        setChaptersDisabled(false);
+      },
+    );
+  }, [selectedBoard, selectedGrade, selectedSubject]);
+
+  useEffect(() => {
+    if (!selectedBoard || !selectedGrade) {
+      setSubjects([]);
+      setSelectedSubject("");
+      setSelectedChapter("");
+      setSelectedSubtopic("");
+      setChapters([]);
+      setSubtopics([]);
+      return;
+    }
+    fetchSubjects(selectedBoard, selectedGrade).then((data) => {
+      setSubjects(data);
+      setSelectedSubject("");
+      setSelectedChapter("");
+      setSelectedSubtopic("");
+      setChapters([]);
+      setSubtopics([]);
+    });
+  }, [selectedBoard, selectedGrade]);
+
+  useEffect(() => {
+    setSelectedChapter("");
+    setSelectedSubtopic("");
+    setSubtopics([]);
+  }, [selectedSubject, selectedGrade]);
 
   useEffect(() => {
     if (!selectedSubject) {
@@ -98,6 +146,10 @@ export default function CurriculumFilters({ assetId }: CurriculumFiltersProps) {
         chapterId: selectedChapter,
         subtopicId: selectedSubtopic,
         createdBy: profile_data.userName,
+        title: asset?.title || "",
+        mimeType: asset?.mimeType || "",
+        assetType: asset?.assetType || "",
+        subType: asset?.subType || "",
       });
       setIsMapped(true);
       setSaving(false);

@@ -1,7 +1,19 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { content_db } from "~/db";
 import { tce_asset_mapping } from "~/db/models/content/tce-asset-mapping";
+import { chapter_assets } from "~/db/models/content/chapter-assets";
 import type { Route } from "./+types/api.mapping";
+
+function generateId(): string {
+  return Array.from({ length: 32 }, () =>
+    Math.floor(Math.random() * 16).toString(16),
+  ).join("");
+}
+
+function toEnumFormat(value: string, fallback: string): string {
+  if (!value) return fallback;
+  return value.toUpperCase().replace(/-/g, "_");
+}
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -22,6 +34,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   return Response.json({
+    gradeId: mapping.grade_id,
     subjectId: mapping.subject_id,
     chapterId: mapping.chapter_id,
     subtopicId: mapping.subtopic_id,
@@ -34,8 +47,18 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const body = await request.json();
-  const { assetId, gradeId, subjectId, chapterId, subtopicId, createdBy } =
-    body;
+  const {
+    assetId,
+    gradeId,
+    subjectId,
+    chapterId,
+    subtopicId,
+    createdBy,
+    title,
+    mimeType,
+    assetType,
+    subType,
+  } = body;
 
   if (!assetId || !subjectId || !chapterId || !createdBy || !gradeId) {
     return Response.json({ error: "Missing fields" }, { status: 400 });
@@ -43,7 +66,6 @@ export async function action({ request }: Route.ActionArgs) {
 
   const subtopicIdValue = subtopicId || null;
 
-  // Upsert: check if a mapping exists, then update or insert
   const existing = await content_db
     .select()
     .from(tce_asset_mapping)
@@ -69,6 +91,29 @@ export async function action({ request }: Route.ActionArgs) {
       subtopic_id: subtopicIdValue,
       created_by: createdBy,
     });
+  }
+
+  const now = Date.now();
+
+  const existingChapterAsset = await content_db
+    .select()
+    .from(chapter_assets)
+    .where(eq(chapter_assets.asset_id, assetId));
+
+  if (existingChapterAsset.length > 0) {
+    await content_db
+      .update(chapter_assets)
+      .set({
+        chapter_id: chapterId,
+        modified_at: now,
+        last_modified_by: createdBy,
+      })
+      .where(eq(chapter_assets.asset_id, assetId));
+  } else {
+    await content_db.execute(
+      sql`INSERT INTO chapter_assets (id, active, deleted, asset_id, asset_mime_type, asset_sub_type, asset_type, chapter_id, content_consumer, content_type, title, created_at, created_by, modified_at)
+       VALUES (${generateId()}, ${true}, ${false}, ${assetId}, ${sql`${toEnumFormat(mimeType || "", "MP4")}::asset_mime_type`}, ${sql`${toEnumFormat(subType || "", "VIDEO")}::asset_sub_type`}, ${sql`${toEnumFormat(assetType || "", "ASSET_MEDIA")}::asset_type`}, ${chapterId}, ${"TEACHER"}, ${"STUDY"}, ${title || ""}, ${now}, ${createdBy}, ${now})`,
+    );
   }
 
   return Response.json({ ok: true });
