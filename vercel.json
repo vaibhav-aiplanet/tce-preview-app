@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "fluid": true,
-  "bunVersion": "1.3.5",
   "framework": "react-router",
   "rewrites": [
     {
