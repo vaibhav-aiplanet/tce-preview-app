@@ -6,7 +6,6 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
-  // API routes (server-only, no UI)
   route("_api/subjects", "routes/api.subjects.ts"),
   route("_api/chapters", "routes/api.chapters.ts"),
   route("_api/subtopics", "routes/api.subtopics.ts"),

@@ -6,7 +6,7 @@ interface AssetGridSkeletonProps {
 
 export default function AssetGridSkeleton({ count = 12 }: AssetGridSkeletonProps) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4 p-6">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-6 pt-2">
       {Array.from({ length: count }).map((_, i) => (
         <Card key={i} className="overflow-hidden p-0" variant="default">
           {/* Thumbnail placeholder */}

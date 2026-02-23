@@ -1,4 +1,4 @@
-import { Button, Input, Spinner } from "@heroui/react";
+import { Input, Spinner } from "@heroui/react";
 import { useState } from "react";
 import {
   useLocation,
@@ -10,8 +10,9 @@ import {
 import PlayerDialog from "~/components/PlayerDialog";
 import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
-import { logout, redirectToLogin } from "~/lib/auth";
+import { redirectToLogin } from "~/lib/auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
+import NavBar from "~/components/NavBar";
 
 interface OutletContextType {
   batchData: {
@@ -72,18 +73,10 @@ export default function Asset() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Navigation bar */}
-      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3 mb-3">
-        <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
-          Home
-        </Button>
-        <Button variant="ghost" size="sm" onPress={logout}>
-          Logout
-        </Button>
-      </nav>
+      <NavBar />
 
       {/* Header section */}
-      <div className="flex flex-col items-center gap-3 px-6 py-5">
+      <div className="flex flex-col items-center gap-2.5 px-6 pt-4 pb-3">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Preview TCE Asset
         </h1>
@@ -95,7 +88,7 @@ export default function Asset() {
           placeholder="Enter Asset ID"
           disabled={isLoading}
         />
-        <span className="text-sm text-muted">
+        <span className="text-xs text-muted">
           {isLoading ? (
             <span className="flex items-center gap-2">
               <Spinner size="sm" />

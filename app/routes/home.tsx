@@ -7,11 +7,12 @@ import {
   useMatches,
   useSearchParams,
 } from "react-router";
-import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
-import { ensureAuthenticated, logout } from "~/lib/auth";
+import { Select, Label, ListBox, Spinner } from "@heroui/react";
+import { ensureAuthenticated } from "~/lib/auth";
 import { useBatchAssetData } from "~/lib/tce-queries";
 import AssetGrid from "~/components/AssetGrid";
 import AssetGridSkeleton from "~/components/AssetGridSkeleton";
+import NavBar from "~/components/NavBar";
 
 type Manifest = Record<string, { name: string; path: string }[]>;
 
@@ -114,21 +115,13 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Navigation bar */}
-      <nav className="flex items-center gap-2 border-b border-border/40 px-4 py-3 mb-3">
-        <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
-          Home
-        </Button>
-        <Button variant="ghost" size="sm" onPress={logout}>
-          Logout
-        </Button>
-      </nav>
+      <NavBar />
 
       {/* Header section */}
       <div
-        className={`flex flex-col items-start gap-2 px-6 ${showIdleState ? "flex-1" : ""}`}
+        className={`flex flex-col items-start gap-3 px-6 pt-5 pb-4 ${showIdleState ? "flex-1 justify-center" : ""}`}
       >
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Preview TCE Assets
         </h1>
 
@@ -140,7 +133,7 @@ export default function Home() {
         )}
 
         {!loadingFilters && gradesFromManifest.length > 0 && (
-          <div className="flex flex-wrap items-start gap-3 mt-1">
+          <div className="flex flex-wrap items-end gap-3 mt-2">
             <Select
               className="w-[180px]"
               placeholder="Select Grade"
@@ -165,7 +158,7 @@ export default function Home() {
             </Select>
 
             <Select
-              className="w-[280px] data-[placeholder=true]:truncate"
+              className="w-[360px] data-[placeholder=true]:truncate"
               placeholder="Select Book"
               isDisabled={!selectedGrade}
               value={selectedGrade ? selectedFile || null : null}
@@ -205,6 +198,17 @@ export default function Home() {
         )}
         {batchError && (
           <p className="text-sm text-danger">{batchError.message}</p>
+        )}
+
+        {showIdleState && !loadingFilters && (
+          <div className="mt-6 flex flex-col items-center self-center text-center">
+            <p className="text-base text-muted">
+              Select a grade and book above to browse assets.
+            </p>
+            <p className="mt-1 text-sm text-muted/60">
+              Or navigate to an asset directly by its ID.
+            </p>
+          </div>
         )}
       </div>
 

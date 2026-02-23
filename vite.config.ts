@@ -1,9 +1,7 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
-import type { Plugin } from "vite";
 import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { vercelPreset } from "@vercel/react-router/vite";
 import { excelToJsonPlugin } from "./plugins/excel-to-json";
 
 export default defineConfig(({ mode }) => {
@@ -46,6 +44,5 @@ export default defineConfig(({ mode }) => {
       reactRouter(),
       tsconfigPaths(),
     ],
-    presets: [vercelPreset()],
   };
 });

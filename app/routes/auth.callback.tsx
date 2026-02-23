@@ -56,19 +56,29 @@ export default function AuthCallback() {
 
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-3">
-        <p className="text-sm text-danger">{error}</p>
-        <Button variant="secondary" onPress={redirectToLogin}>
-          Go to Login
-        </Button>
+      <div className="flex h-screen flex-col items-center justify-center gap-4">
+        <span className="text-lg font-semibold tracking-tight text-foreground">
+          TCE Preview
+        </span>
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-border/40 px-8 py-6">
+          <p className="text-sm text-danger">{error}</p>
+          <Button variant="secondary" onPress={redirectToLogin}>
+            Go to Login
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen items-center justify-center gap-2 text-muted">
-      <Spinner size="sm" />
-      Logging in...
+    <div className="flex h-screen flex-col items-center justify-center gap-4">
+      <span className="text-lg font-semibold tracking-tight text-foreground">
+        TCE Preview
+      </span>
+      <div className="flex items-center gap-2 text-sm text-muted">
+        <Spinner size="sm" />
+        Logging you in...
+      </div>
     </div>
   );
 }

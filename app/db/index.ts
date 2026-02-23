@@ -2,14 +2,13 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { env } from "~/lib/env";
 
-function createDbConnection(connectionString: string) {
-  if (!connectionString) {
-    return null;
-  }
-  const client = postgres(connectionString, { ssl: "require" });
-  return drizzle(client);
-}
+const connectionString = env.master_db_url;
+const queryClient = postgres(connectionString, { ssl: "require" });
 
-export const master_db = createDbConnection(env.master_db_url);
-export const user_db = createDbConnection(env.users_db_url);
-export const content_db = createDbConnection(env.content_db_url);
+export const master_db = drizzle(queryClient);
+
+const usersClient = postgres(env.users_db_url, { ssl: "require" });
+export const user_db = drizzle(usersClient);
+
+const contentClient = postgres(env.content_db_url, { ssl: "require" });
+export const content_db = drizzle(contentClient);
