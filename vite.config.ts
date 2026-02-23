@@ -38,6 +38,13 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    ssr: {
+      noExternal: [
+        "@heroui/react",
+        "@heroui/styles",
+        "react-aria-components",
+      ],
+    },
     plugins: [
       excelToJsonPlugin(),
       tailwindcss(),
