@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
+import { Button, Select, ListBox, Spinner } from "@heroui/react";
 import {
   fetchSubjects,
   fetchChapters,

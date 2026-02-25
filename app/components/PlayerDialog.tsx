@@ -1,4 +1,4 @@
-import { Button, Modal } from "@heroui/react";
+import { Modal } from "@heroui/react";
 import TCEPlayer from "~/components/TCEPlayer";
 import CurriculumFilters from "~/components/CurriculumFilters";
 
