@@ -10,6 +10,8 @@ const TCEPlayer = ({
   const [isResourcesLoaded, setIsResourcesLoaded] = useState(false);
   const [, setIsPlayerInitialized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const playerWrapperRef = useRef<HTMLDivElement>(null);
@@ -101,29 +103,23 @@ const TCEPlayer = ({
   useEffect(() => {
     const loadResources = async () => {
       try {
-        console.log("Loading TCE Player resources...");
+        setLoadError(false);
 
-        console.log("Loading styles...");
         await loadStyle(`/tceplayer-two/styles.css`);
-
-        console.log("Loading resizePlayer script...");
         await loadScript(
           `/tceplayer-two/assets/tcemedia/external/player-html/player/js/shell/common/resizePlayer.js`,
         );
-
-        console.log("Loading tce-player-hybrid script...");
         await loadScript(`/tceplayer-two/tce-player-hybrid.js`);
-
-        console.log("All resources loaded successfully");
 
         setIsResourcesLoaded(true);
       } catch (error) {
         console.error("Failed to load TCE Player resources:", error);
+        setLoadError(true);
       }
     };
 
     loadResources();
-  }, [loadScript, loadStyle]);
+  }, [loadScript, loadStyle, retryCount]);
 
   const handleLoadPlayer = useCallback(
     (event: CustomEvent<string>) => {
@@ -254,6 +250,20 @@ const TCEPlayer = ({
       }
     };
   }, [isResourcesLoaded, handleLoadPlayer]);
+
+  if (loadError) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3">
+        <p className="text-sm text-danger">Failed to load player resources.</p>
+        <button
+          onClick={() => setRetryCount((c) => c + 1)}
+          className="cursor-pointer rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
+        >
+          Reload Player
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div

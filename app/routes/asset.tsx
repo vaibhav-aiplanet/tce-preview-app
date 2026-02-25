@@ -45,6 +45,7 @@ export default function Asset() {
     data: playerData,
     isLoading,
     error,
+    refetch,
   } = useTCEPlayerData(fromGrid && gridAsset ? "" : paramAssetId || "");
 
   const handleSubmit = () => {
@@ -95,7 +96,15 @@ export default function Asset() {
               Loading...
             </span>
           ) : error ? (
-            <span className="text-danger">{error.message}</span>
+            <span className="flex items-center gap-2 text-danger">
+              {error.message}
+              <button
+                onClick={() => refetch()}
+                className="cursor-pointer rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background transition-opacity hover:opacity-90"
+              >
+                Retry
+              </button>
+            </span>
           ) : (
             <>
               Press <strong>Enter</strong> to load player

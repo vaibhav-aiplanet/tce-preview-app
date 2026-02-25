@@ -41,6 +41,7 @@ export function useTCEPlayerData(assetId: string) {
     data: query.data ?? null,
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
   };
 }
 
@@ -63,5 +64,6 @@ export function useBatchAssetData(assetIds: string[]) {
     data: query.data ?? null,
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
   };
 }
