@@ -14,6 +14,7 @@ import { useBatchAssetData } from "~/lib/tce-queries";
 import AssetGrid from "~/components/AssetGrid";
 import AssetGridSkeleton from "~/components/AssetGridSkeleton";
 import NavBar from "~/components/NavBar";
+import { buildOgMeta } from "~/lib/og-meta";
 
 const PAGE_SIZE = 18;
 
@@ -27,28 +28,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 export function meta({ data }: Route.MetaArgs) {
   const loaderData = data as unknown as { origin: string } | null;
   const origin = loaderData?.origin || "";
-  return [
-    { title: "TCE Assets Preview" },
-    { name: "description", content: "Preview TCE Assets" },
-    { property: "og:type", content: "website" },
-    { property: "og:site_name", content: "TCE Preview" },
-    { property: "og:url", content: origin },
-    { property: "og:title", content: "TCE Assets Preview" },
-    {
-      property: "og:description",
-      content: "Browse and preview TCE educational video assets",
-    },
-    { property: "og:image", content: `${origin}/og-image.png` },
-    { property: "og:image:width", content: "1200" },
-    { property: "og:image:height", content: "630" },
-    { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:title", content: "TCE Assets Preview" },
-    {
-      name: "twitter:description",
-      content: "Browse and preview TCE educational video assets",
-    },
-    { name: "twitter:image", content: `${origin}/og-image.png` },
-  ];
+  return buildOgMeta({
+    title: "TCE Assets Preview",
+    description: "Browse and preview TCE educational video assets",
+    origin,
+  });
 }
 
 export async function clientLoader() {
