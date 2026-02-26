@@ -1,4 +1,5 @@
 import { Input, Spinner } from "@heroui/react";
+import { eq } from "drizzle-orm";
 import { useState } from "react";
 import {
   useLocation,
@@ -7,12 +8,15 @@ import {
   useParams,
   useSearchParams,
 } from "react-router";
+import { content_db } from "~/db";
+import { chapter_assets } from "~/db/models/content/chapter-assets";
 import PlayerDialog from "~/components/PlayerDialog";
 import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
 import { redirectToLogin } from "~/lib/auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
 import NavBar from "~/components/NavBar";
+import type { Route } from "./+types/asset";
 
 interface OutletContextType {
   batchData: {
@@ -21,6 +25,54 @@ interface OutletContextType {
     expiresIn: number;
     assets: TCEAsset[];
   } | null;
+}
+
+export async function loader({ params, request }: Route.LoaderArgs) {
+  const assetId = params.assetId;
+  if (!assetId) return Response.json(null);
+
+  const url = new URL(request.url);
+  const grade = url.searchParams.get("grade") || "";
+  const book = url.searchParams.get("book") || "";
+
+  const rows = await content_db
+    .select({ title: chapter_assets.title })
+    .from(chapter_assets)
+    .where(eq(chapter_assets.asset_id, assetId));
+
+  const title = rows[0]?.title || "";
+
+  // Extract readable book name from the JSON file path
+  const bookName = book
+    ? decodeURIComponent(book)
+        .replace(/^\/azvasa\/\d+\//, "")
+        .replace(/-\d+\.json$/, "")
+        .replace(/\+/g, " ")
+    : "";
+
+  return Response.json({ title, grade, bookName });
+}
+
+export function meta({ data, params }: Route.MetaArgs) {
+  // During SSR, data comes from the server loader.
+  // The clientLoader returns null, so TS types data as null — cast here
+  // since OG tags only matter during SSR where the server loader runs.
+  const loaderData = data as { title: string; grade: string; bookName: string } | null;
+  const title = loaderData?.title || `Asset ${params.assetId}`;
+  const ogImageParams = new URLSearchParams({ title });
+  if (loaderData?.grade) ogImageParams.set("grade", loaderData.grade);
+  if (loaderData?.bookName) ogImageParams.set("book", loaderData.bookName);
+
+  return [
+    { title: `${title} | TCE Preview` },
+    { property: "og:type", content: "video.other" },
+    { property: "og:site_name", content: "TCE Preview" },
+    { property: "og:title", content: title },
+    { property: "og:description", content: `Preview TCE asset: ${title}` },
+    { property: "og:image", content: `/_api/og-image?${ogImageParams.toString()}` },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+  ];
 }
 
 export async function clientLoader() {

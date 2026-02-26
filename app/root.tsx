@@ -14,6 +14,21 @@ import "~/lib/axios-interceptors";
 
 const queryClient = new QueryClient();
 
+export const meta: Route.MetaFunction = () => [
+  { title: "TCE Preview" },
+  { name: "description", content: "Preview and manage TCE educational assets" },
+  { property: "og:type", content: "website" },
+  { property: "og:site_name", content: "TCE Preview" },
+  { property: "og:title", content: "TCE Preview" },
+  {
+    property: "og:description",
+    content: "Preview and manage TCE educational assets",
+  },
+  { property: "og:image", content: "/og-image.png" },
+  { property: "og:image:width", content: "1200" },
+  { property: "og:image:height", content: "630" },
+];
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {

@@ -23,6 +23,16 @@ export function meta({}: Route.MetaArgs) {
   return [
     { title: "TCE Assets Preview" },
     { name: "description", content: "Preview TCE Assets" },
+    { property: "og:type", content: "website" },
+    { property: "og:site_name", content: "TCE Preview" },
+    { property: "og:title", content: "TCE Assets Preview" },
+    {
+      property: "og:description",
+      content: "Browse and preview TCE educational video assets",
+    },
+    { property: "og:image", content: "/og-image.png" },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
   ];
 }
 
