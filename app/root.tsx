@@ -39,6 +39,13 @@ export const meta: Route.MetaFunction = ({ data }) => {
     { property: "og:image", content: `${origin}/og-image.png` },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: "TCE Preview" },
+    {
+      name: "twitter:description",
+      content: "Preview and manage TCE educational assets",
+    },
+    { name: "twitter:image", content: `${origin}/og-image.png` },
   ];
 };
 

@@ -41,6 +41,13 @@ export function meta({ data }: Route.MetaArgs) {
     { property: "og:image", content: `${origin}/og-image.png` },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: "TCE Assets Preview" },
+    {
+      name: "twitter:description",
+      content: "Browse and preview TCE educational video assets",
+    },
+    { name: "twitter:image", content: `${origin}/og-image.png` },
   ];
 }
 

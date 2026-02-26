@@ -76,6 +76,8 @@ export function meta({ data, params }: Route.MetaArgs) {
   if (loaderData?.grade) ogImageParams.set("grade", loaderData.grade);
   if (loaderData?.bookName) ogImageParams.set("book", loaderData.bookName);
 
+  const ogImage = `${origin}/_api/og-image?${ogImageParams.toString()}`;
+
   return [
     { title: `${title} | TCE Preview` },
     { property: "og:type", content: "video.other" },
@@ -83,12 +85,16 @@ export function meta({ data, params }: Route.MetaArgs) {
     { property: "og:url", content: loaderData?.pageUrl || "" },
     { property: "og:title", content: title },
     { property: "og:description", content: `Preview TCE asset: ${title}` },
-    {
-      property: "og:image",
-      content: `${origin}/_api/og-image?${ogImageParams.toString()}`,
-    },
+    { property: "og:image", content: ogImage },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    {
+      name: "twitter:description",
+      content: `Preview TCE asset: ${title}`,
+    },
+    { name: "twitter:image", content: ogImage },
   ];
 }
 
