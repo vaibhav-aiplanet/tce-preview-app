@@ -21,7 +21,7 @@ export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
             className="cursor-pointer overflow-hidden p-0 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]"
             variant="default"
           >
-            <div onClick={() => onSelect(asset)}>
+            <button type="button" onClick={() => onSelect(asset)} className="w-full text-left">
               <div className="relative aspect-video bg-black/90 overflow-hidden">
                 {thumb ? (
                   <img
@@ -62,7 +62,7 @@ export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
                   </Chip>
                 )}
               </div>
-            </div>
+            </button>
           </Card>
         );
       })}

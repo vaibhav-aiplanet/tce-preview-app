@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useReducer, useEffect, useRef } from "react";
 import { Button, Select, ListBox, Spinner } from "@heroui/react";
+import { useQuery } from "@tanstack/react-query";
 import {
   fetchSubjects,
   fetchChapters,
@@ -19,122 +20,255 @@ interface CurriculumFiltersProps {
   };
 }
 
+type CurriculumState = {
+  subjects: CurriculumItem[];
+  chapters: CurriculumItem[];
+  subtopics: CurriculumItem[];
+  selectedBoard: string;
+  selectedGrade: string;
+  selectedSubject: string;
+  selectedChapter: string;
+  selectedSubtopic: string;
+  isMapped: boolean;
+  saving: boolean;
+};
+
+type CurriculumAction =
+  | {
+      type: "INIT_MAPPING";
+      mapping: {
+        gradeId: string;
+        subjectId: string;
+        chapterId: string;
+        subtopicId: string;
+      };
+      chapters: CurriculumItem[];
+      subtopics: CurriculumItem[];
+    }
+  | { type: "INIT_NO_MAPPING" }
+  | { type: "SELECT_BOARD"; board: string }
+  | { type: "SELECT_GRADE"; grade: string }
+  | { type: "SET_SUBJECTS"; subjects: CurriculumItem[] }
+  | { type: "SELECT_SUBJECT"; subject: string }
+  | { type: "SET_CHAPTERS_AND_SUBTOPICS"; chapters: CurriculumItem[]; subtopics: CurriculumItem[] }
+  | { type: "SELECT_CHAPTER"; chapter: string }
+  | { type: "SELECT_SUBTOPIC"; subtopic: string }
+  | { type: "SET_MAPPED"; isMapped: boolean }
+  | { type: "SET_SAVING"; saving: boolean };
+
+const initialState: CurriculumState = {
+  subjects: [],
+  chapters: [],
+  subtopics: [],
+  selectedBoard: "",
+  selectedGrade: "",
+  selectedSubject: "",
+  selectedChapter: "",
+  selectedSubtopic: "",
+  isMapped: false,
+  saving: false,
+};
+
+function curriculumReducer(
+  state: CurriculumState,
+  action: CurriculumAction,
+): CurriculumState {
+  switch (action.type) {
+    case "INIT_MAPPING":
+      return {
+        ...state,
+        isMapped: true,
+        selectedGrade: action.mapping.gradeId || "",
+        selectedSubject: action.mapping.subjectId,
+        selectedChapter: action.mapping.chapterId,
+        selectedSubtopic: action.mapping.subtopicId,
+        chapters: action.chapters,
+        subtopics: action.subtopics,
+      };
+
+    case "INIT_NO_MAPPING":
+      return {
+        ...state,
+        isMapped: false,
+        selectedBoard: "",
+        selectedGrade: "",
+        selectedSubject: "",
+        selectedChapter: "",
+        selectedSubtopic: "",
+        subjects: [],
+        chapters: [],
+        subtopics: [],
+      };
+
+    case "SELECT_BOARD":
+      return {
+        ...state,
+        selectedBoard: action.board,
+        subjects: [],
+        selectedSubject: "",
+        chapters: [],
+        selectedChapter: "",
+        subtopics: [],
+        selectedSubtopic: "",
+      };
+
+    case "SELECT_GRADE":
+      return {
+        ...state,
+        selectedGrade: action.grade,
+        subjects: [],
+        selectedSubject: "",
+        chapters: [],
+        selectedChapter: "",
+        subtopics: [],
+        selectedSubtopic: "",
+      };
+
+    case "SET_SUBJECTS":
+      return {
+        ...state,
+        subjects: action.subjects,
+      };
+
+    case "SELECT_SUBJECT":
+      return {
+        ...state,
+        selectedSubject: action.subject,
+        chapters: [],
+        selectedChapter: "",
+        subtopics: [],
+        selectedSubtopic: "",
+      };
+
+    case "SET_CHAPTERS_AND_SUBTOPICS":
+      return {
+        ...state,
+        chapters: action.chapters,
+        subtopics: action.subtopics,
+      };
+
+    case "SELECT_CHAPTER":
+      return {
+        ...state,
+        selectedChapter: action.chapter,
+        selectedSubtopic: "",
+      };
+
+    case "SELECT_SUBTOPIC":
+      return { ...state, selectedSubtopic: action.subtopic };
+
+    case "SET_MAPPED":
+      return { ...state, isMapped: action.isMapped };
+
+    case "SET_SAVING":
+      return { ...state, saving: action.saving };
+
+    default:
+      return state;
+  }
+}
+
 export default function CurriculumFilters({
   assetId,
   asset,
 }: CurriculumFiltersProps) {
-  const [boards, setBoards] = useState<CurriculumItem[]>([]);
-  const [grades, setGrades] = useState<CurriculumItem[]>([]);
-  const [subjects, setSubjects] = useState<CurriculumItem[]>([]);
-  const [chapters, setChapters] = useState<CurriculumItem[]>([]);
-  const [subtopics, setSubtopics] = useState<CurriculumItem[]>([]);
+  const [state, dispatch] = useReducer(curriculumReducer, initialState);
+  const {
+    subjects,
+    chapters,
+    subtopics,
+    selectedBoard,
+    selectedGrade,
+    selectedSubject,
+    selectedChapter,
+    selectedSubtopic,
+    isMapped,
+    saving,
+  } = state;
 
-  const [selectedBoard, setSelectedBoard] = useState("");
-  const [selectedGrade, setSelectedGrade] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedChapter, setSelectedChapter] = useState("");
-  const [selectedSubtopic, setSelectedSubtopic] = useState("");
-  const [isMapped, setIsMapped] = useState(false);
-  const [saving, setSaving] = useState(false);
+  // Track whether we're in the middle of initializing from a mapping
+  // to avoid redundant fetches from the subjects/chapters effects
+  const initializingRef = useRef(false);
 
-  const [chaptersDisabled, setChaptersDisabled] = useState(false);
+  const { data: boards = [] } = useQuery<CurriculumItem[]>({
+    queryKey: ["boards"],
+    queryFn: () => fetch("/_api/boards").then((r) => r.json()),
+    staleTime: Infinity,
+  });
 
+  const { data: grades = [] } = useQuery<CurriculumItem[]>({
+    queryKey: ["grades"],
+    queryFn: () => fetch("/_api/grades").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+
+  // Load existing mapping when assetId changes
   useEffect(() => {
-    Promise.all([
-      fetch("/_api/boards").then((r) => r.json()),
-      fetch("/_api/grades").then((r) => r.json()),
-    ]).then(([boardsData, gradesData]) => {
-      setBoards(boardsData);
-      setGrades(gradesData);
-    });
+    let cancelled = false;
+    initializingRef.current = true;
 
-    fetchMapping(assetId).then(async (mapping) => {
+    async function init() {
+      const mapping = await fetchMapping(assetId);
+      if (cancelled) return;
+
       if (!mapping) {
-        setIsMapped(false);
-        setSelectedBoard("");
-        setSelectedGrade("");
-        setSelectedSubject("");
-        setSelectedChapter("");
-        setSelectedSubtopic("");
-        setChapters([]);
-        setSubtopics([]);
+        dispatch({ type: "INIT_NO_MAPPING" });
+        initializingRef.current = false;
         return;
       }
 
-      setIsMapped(true);
-      setSelectedGrade(mapping.gradeId || "");
-      setSelectedSubject(mapping.subjectId);
+      const [ch, st] = await Promise.all([
+        fetchChapters(mapping.subjectId, "", mapping.gradeId || ""),
+        fetchSubtopics(mapping.subjectId),
+      ]);
 
-      const ch = await fetchChapters(
-        mapping.subjectId,
-        "",
-        mapping.gradeId || "",
-      );
-      setChapters(ch);
-      setSelectedChapter(mapping.chapterId);
+      if (cancelled) return;
+      dispatch({ type: "INIT_MAPPING", mapping, chapters: ch, subtopics: st });
+      initializingRef.current = false;
+    }
 
-      const st = await fetchSubtopics(mapping.subjectId);
-      setSubtopics(st);
-      setSelectedSubtopic(mapping.subtopicId);
-    });
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, [assetId]);
 
+  // Fetch subjects when board + grade are selected
   useEffect(() => {
-    if (!selectedSubject || !selectedBoard || !selectedGrade) {
-      setChapters([]);
-      setSelectedChapter("");
-      setSelectedSubtopic("");
-      setSubtopics([]);
-      return;
-    }
-    fetchChapters(selectedSubject, selectedBoard, selectedGrade).then(
-      (data) => {
-        setChapters(data);
-        setChaptersDisabled(false);
-      },
-    );
-  }, [selectedBoard, selectedGrade, selectedSubject]);
+    if (!selectedBoard || !selectedGrade) return;
+    if (initializingRef.current) return;
 
-  useEffect(() => {
-    if (!selectedBoard || !selectedGrade) {
-      setSubjects([]);
-      setSelectedSubject("");
-      setSelectedChapter("");
-      setSelectedSubtopic("");
-      setChapters([]);
-      setSubtopics([]);
-      return;
-    }
     fetchSubjects(selectedBoard, selectedGrade).then((data) => {
-      setSubjects(data);
-      setSelectedSubject("");
-      setSelectedChapter("");
-      setSelectedSubtopic("");
-      setChapters([]);
-      setSubtopics([]);
+      dispatch({ type: "SET_SUBJECTS", subjects: data });
     });
   }, [selectedBoard, selectedGrade]);
 
+  // Fetch chapters + subtopics when subject is selected
   useEffect(() => {
-    setSelectedChapter("");
-    setSelectedSubtopic("");
-    setSubtopics([]);
-  }, [selectedSubject, selectedGrade]);
+    if (!selectedSubject) return;
+    if (initializingRef.current) return;
 
-  useEffect(() => {
-    if (!selectedSubject) {
-      setSubtopics([]);
-      return;
-    }
-    fetchSubtopics(selectedSubject).then(setSubtopics);
-  }, [selectedSubject]);
+    const needsBoard = selectedBoard && selectedGrade;
+    Promise.all([
+      needsBoard
+        ? fetchChapters(selectedSubject, selectedBoard, selectedGrade)
+        : fetchChapters(selectedSubject, "", selectedGrade),
+      fetchSubtopics(selectedSubject),
+    ]).then(([ch, st]) => {
+      dispatch({
+        type: "SET_CHAPTERS_AND_SUBTOPICS",
+        chapters: ch,
+        subtopics: st,
+      });
+    });
+  }, [selectedSubject, selectedBoard, selectedGrade]);
 
   const canSave = selectedSubject && selectedChapter;
 
   const handleSave = async () => {
     try {
       if (!canSave) return;
-      setSaving(true);
+      dispatch({ type: "SET_SAVING", saving: true });
 
       const profile_data = JSON.parse(
         sessionStorage.getItem("profile") || "{}",
@@ -151,12 +285,12 @@ export default function CurriculumFilters({
         assetType: asset?.assetType || "",
         subType: asset?.subType || "",
       });
-      setIsMapped(true);
-      setSaving(false);
+      dispatch({ type: "SET_MAPPED", isMapped: true });
     } catch (error) {
       console.error(error);
-      setIsMapped(false);
-      setSaving(false);
+      dispatch({ type: "SET_MAPPED", isMapped: false });
+    } finally {
+      dispatch({ type: "SET_SAVING", saving: false });
     }
   };
 
@@ -170,9 +304,9 @@ export default function CurriculumFilters({
         className="w-32 data-[placeholder=true]:truncate"
         placeholder="Board"
         value={selectedBoard || null}
-        onChange={(value) => {
-          setSelectedBoard(String(value ?? ""));
-        }}
+        onChange={(value) =>
+          dispatch({ type: "SELECT_BOARD", board: String(value ?? "") })
+        }
       >
         <Select.Trigger>
           <Select.Value className="truncate" />
@@ -194,9 +328,9 @@ export default function CurriculumFilters({
         className="w-32 data-[placeholder=true]:truncate"
         placeholder="Grade"
         value={selectedGrade || null}
-        onChange={(value) => {
-          setSelectedGrade(String(value ?? ""));
-        }}
+        onChange={(value) =>
+          dispatch({ type: "SELECT_GRADE", grade: String(value ?? "") })
+        }
       >
         <Select.Trigger>
           <Select.Value className="truncate" />
@@ -218,11 +352,12 @@ export default function CurriculumFilters({
         className="w-40"
         placeholder="Subject"
         value={selectedSubject || null}
-        onChange={(value) => {
-          setSelectedSubject(String(value ?? ""));
-          setSelectedChapter("");
-          setSelectedSubtopic("");
-        }}
+        onChange={(value) =>
+          dispatch({
+            type: "SELECT_SUBJECT",
+            subject: String(value ?? ""),
+          })
+        }
       >
         <Select.Trigger>
           <Select.Value className="truncate" />
@@ -245,10 +380,12 @@ export default function CurriculumFilters({
         placeholder="Chapter"
         isDisabled={!selectedSubject}
         value={selectedChapter || null}
-        onChange={(value) => {
-          setSelectedChapter(String(value ?? ""));
-          setSelectedSubtopic("");
-        }}
+        onChange={(value) =>
+          dispatch({
+            type: "SELECT_CHAPTER",
+            chapter: String(value ?? ""),
+          })
+        }
       >
         <Select.Trigger>
           <Select.Value className="truncate" />
@@ -271,7 +408,12 @@ export default function CurriculumFilters({
         placeholder="Subtopic"
         isDisabled={!selectedChapter}
         value={selectedSubtopic || null}
-        onChange={(value) => setSelectedSubtopic(String(value ?? ""))}
+        onChange={(value) =>
+          dispatch({
+            type: "SELECT_SUBTOPIC",
+            subtopic: String(value ?? ""),
+          })
+        }
       >
         <Select.Trigger>
           <Select.Value className="truncate" />

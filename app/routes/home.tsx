@@ -8,6 +8,7 @@ import {
   useSearchParams,
 } from "react-router";
 import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
+import { useQuery } from "@tanstack/react-query";
 import { ensureAuthenticated } from "~/lib/auth";
 import { useBatchAssetData } from "~/lib/tce-queries";
 import AssetGrid from "~/components/AssetGrid";
@@ -35,22 +36,22 @@ export default function Home() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [batchAssetIds, setBatchAssetIds] = useState<string[]>([]);
-  const [manifest, setManifest] = useState<Manifest | null>(null);
   const [fileLoading, setFileLoading] = useState(false);
-  const [loadingFilters, setLoadingFilters] = useState(true);
   const [page, setPage] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const selectedGrade = searchParams.get("grade") ?? "";
   const selectedFile = searchParams.get("book") ?? "";
 
-  useEffect(() => {
-    fetch("/azvasa/manifest.json")
-      .then((r) => r.json())
-      .then((data: Manifest) => setManifest(data))
-      .catch(() => setManifest(null))
-      .finally(() => setLoadingFilters(false));
-  }, []);
+  const { data: manifest, isLoading: loadingFilters } = useQuery<Manifest>({
+    queryKey: ["manifest"],
+    queryFn: () =>
+      fetch("/azvasa/manifest.json").then((r) => {
+        if (!r.ok) throw new Error("Failed to load manifest");
+        return r.json() as Promise<Manifest>;
+      }),
+    staleTime: Infinity,
+  });
 
   const gradesFromManifest = manifest
     ? Object.keys(manifest).sort((a, b) => Number(a) - Number(b))
@@ -65,18 +66,21 @@ export default function Home() {
       const resp = await fetch(filePath);
       const ids: string[] = await resp.json();
       setBatchAssetIds(ids);
+      setPage(0);
     } catch {
       setBatchAssetIds([]);
+      setPage(0);
     } finally {
       setFileLoading(false);
     }
   }, []);
 
+  const initialBookRef = useRef(selectedFile);
   useEffect(() => {
-    if (selectedFile) {
-      loadAssetIds(selectedFile);
+    if (initialBookRef.current) {
+      loadAssetIds(initialBookRef.current);
     }
-  }, [selectedFile, loadAssetIds]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGradeChange = (grade: string) => {
     if (grade) {
@@ -89,8 +93,11 @@ export default function Home() {
   const handleBookChange = (book: string) => {
     if (book) {
       setSearchParams({ grade: selectedGrade, book });
+      loadAssetIds(book);
     } else {
       setSearchParams({ grade: selectedGrade });
+      setBatchAssetIds([]);
+      setPage(0);
     }
   };
 
@@ -99,11 +106,6 @@ export default function Home() {
     () => batchAssetIds.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
     [batchAssetIds, page],
   );
-
-  // Reset page when asset IDs change (new book selected)
-  useEffect(() => {
-    setPage(0);
-  }, [batchAssetIds]);
 
   const {
     data: batchData,

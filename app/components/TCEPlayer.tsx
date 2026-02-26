@@ -7,10 +7,10 @@ const TCEPlayer = ({
   asset,
 }: TCEPlayerProps) => {
   console.log(asset);
-  const [isResourcesLoaded, setIsResourcesLoaded] = useState(false);
-  const [, setIsPlayerInitialized] = useState(false);
+  const [resourceStatus, setResourceStatus] = useState<
+    "loading" | "loaded" | "error"
+  >("loading");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [loadError, setLoadError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -101,24 +101,24 @@ const TCEPlayer = ({
   }, []);
 
   useEffect(() => {
-    const loadResources = async () => {
+    const loadResources = async (): Promise<"loaded" | "error"> => {
       try {
-        setLoadError(false);
-
-        await loadStyle(`/tceplayer-two/styles.css`);
-        await loadScript(
-          `/tceplayer-two/assets/tcemedia/external/player-html/player/js/shell/common/resizePlayer.js`,
-        );
-        await loadScript(`/tceplayer-two/tce-player-hybrid.js`);
-
-        setIsResourcesLoaded(true);
+        await Promise.all([
+          loadStyle(`/tceplayer-two/styles.css`),
+          loadScript(
+            `/tceplayer-two/assets/tcemedia/external/player-html/player/js/shell/common/resizePlayer.js`,
+          ),
+          loadScript(`/tceplayer-two/tce-player-hybrid.js`),
+        ]);
+        return "loaded";
       } catch (error) {
         console.error("Failed to load TCE Player resources:", error);
-        setLoadError(true);
+        return "error";
       }
     };
 
-    loadResources();
+    setResourceStatus("loading");
+    loadResources().then(setResourceStatus);
   }, [loadScript, loadStyle, retryCount]);
 
   const handleLoadPlayer = useCallback(
@@ -188,7 +188,6 @@ const TCEPlayer = ({
           next: () => {
             console.log("TCE Player loaded and ready!");
             isPlayerInitializedRef.current = true;
-            setIsPlayerInitialized(true);
           },
           error: (error) => {
             console.error("TCE Player loading error:", error);
@@ -207,7 +206,7 @@ const TCEPlayer = ({
   );
 
   useEffect(() => {
-    if (!isResourcesLoaded || !playerContainerRef.current) return;
+    if (resourceStatus !== "loaded" || !playerContainerRef.current) return;
 
     const container = playerContainerRef.current;
 
@@ -249,9 +248,9 @@ const TCEPlayer = ({
         angularReferenceRef.current.subscription.unsubscribe();
       }
     };
-  }, [isResourcesLoaded, handleLoadPlayer]);
+  }, [resourceStatus, handleLoadPlayer]);
 
-  if (loadError) {
+  if (resourceStatus === "error") {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
         <p className="text-sm text-danger">Failed to load player resources.</p>

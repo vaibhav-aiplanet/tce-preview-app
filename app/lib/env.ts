@@ -59,7 +59,6 @@ const getProcessEnv = () => {
   };
 };
 
-export type Env = z.infer<typeof publicSchema>;
 export const env = {
   ...publicSchema.parse(import.meta.env),
   ...privateSchema.parse(getProcessEnv()),

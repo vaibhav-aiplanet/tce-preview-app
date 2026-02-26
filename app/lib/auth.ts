@@ -13,7 +13,7 @@ export function logout() {
   redirectToLogin();
 }
 
-export async function validateToken(): Promise<TokenValidateResponse> {
+async function validateToken(): Promise<TokenValidateResponse> {
   const token = sessionStorage.getItem("token");
   const response = await axios.get<TokenValidateResponse>(
     `${env.api_url}/v1/api/user/oauth/token/validate`,

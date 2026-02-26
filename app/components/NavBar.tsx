@@ -1,5 +1,5 @@
 import { Button } from "@heroui/react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { logout } from "~/lib/auth";
 
 export default function NavBar() {
@@ -7,12 +7,12 @@ export default function NavBar() {
 
   return (
     <nav className="flex items-center gap-3 border-b border-border/40 bg-background/80 px-5 py-2.5 backdrop-blur-sm">
-      <span
-        className="mr-auto cursor-pointer text-base font-semibold tracking-tight text-foreground"
-        onClick={() => navigate("/")}
+      <Link
+        to="/"
+        className="mr-auto text-base font-semibold tracking-tight text-foreground no-underline"
       >
         TCE Preview
-      </span>
+      </Link>
 
       <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
         Home

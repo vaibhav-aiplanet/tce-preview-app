@@ -1,12 +1,12 @@
 import { index, pgEnum, pgTable } from "drizzle-orm/pg-core";
 
-export const assetTypeEnum = pgEnum("asset_type", [
+const assetTypeEnum = pgEnum("asset_type", [
   "ASSET_GALLERY",
   "ASSET_MEDIA",
   "ASSET_PRINT",
 ]);
 
-export const assetSubTypeEnum = pgEnum("asset_sub_type", [
+const assetSubTypeEnum = pgEnum("asset_sub_type", [
   "ANIMATION",
   "AUDIO",
   "FP_ACTIVITY",
@@ -28,7 +28,7 @@ export const assetSubTypeEnum = pgEnum("asset_sub_type", [
   "GALLERY",
 ]);
 
-export const assetMimeTypeEnum = pgEnum("asset_mime_type", [
+const assetMimeTypeEnum = pgEnum("asset_mime_type", [
   "GALLERY",
   "MP4",
   "SWF",
@@ -40,12 +40,12 @@ export const assetMimeTypeEnum = pgEnum("asset_mime_type", [
   "F4V",
 ]);
 
-export const contentConsumerEnum = pgEnum("content_consumer", [
+const contentConsumerEnum = pgEnum("content_consumer", [
   "TEACHER",
   "STUDENT",
 ]);
 
-export const contentTypeEnum = pgEnum("content_type", ["STUDY", "REVISION"]);
+const contentTypeEnum = pgEnum("content_type", ["STUDY", "REVISION"]);
 
 export const chapter_assets = pgTable(
   "chapter_assets",

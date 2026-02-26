@@ -3,7 +3,7 @@ import path from "node:path";
 import type { Plugin } from "vite";
 import { read, utils } from "xlsx";
 
-export function parseAssetIdsFromBuffer(buffer: Buffer): string[] {
+function parseAssetIdsFromBuffer(buffer: Buffer): string[] {
   const workbook = read(buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = utils.sheet_to_json<string[]>(sheet, { header: 1 });
