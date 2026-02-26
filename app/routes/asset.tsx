@@ -50,15 +50,21 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         .replace(/\+/g, " ")
     : "";
 
-  return Response.json({ title, grade, bookName });
+  return Response.json({ title, grade, bookName, origin: url.origin });
 }
 
 export function meta({ data, params }: Route.MetaArgs) {
   // During SSR, data comes from the server loader.
   // The clientLoader returns null, so TS types data as null — cast here
   // since OG tags only matter during SSR where the server loader runs.
-  const loaderData = data as { title: string; grade: string; bookName: string } | null;
+  const loaderData = data as {
+    title: string;
+    grade: string;
+    bookName: string;
+    origin: string;
+  } | null;
   const title = loaderData?.title || `Asset ${params.assetId}`;
+  const origin = loaderData?.origin || "";
   const ogImageParams = new URLSearchParams({ title });
   if (loaderData?.grade) ogImageParams.set("grade", loaderData.grade);
   if (loaderData?.bookName) ogImageParams.set("book", loaderData.bookName);
@@ -69,7 +75,10 @@ export function meta({ data, params }: Route.MetaArgs) {
     { property: "og:site_name", content: "TCE Preview" },
     { property: "og:title", content: title },
     { property: "og:description", content: `Preview TCE asset: ${title}` },
-    { property: "og:image", content: `/_api/og-image?${ogImageParams.toString()}` },
+    {
+      property: "og:image",
+      content: `${origin}/_api/og-image?${ogImageParams.toString()}`,
+    },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
   ];

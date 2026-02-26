@@ -19,7 +19,14 @@ const PAGE_SIZE = 18;
 
 type Manifest = Record<string, { name: string; path: string }[]>;
 
-export function meta({}: Route.MetaArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  const origin = new URL(request.url).origin;
+  return Response.json({ origin });
+}
+
+export function meta({ data }: Route.MetaArgs) {
+  const loaderData = data as unknown as { origin: string } | null;
+  const origin = loaderData?.origin || "";
   return [
     { title: "TCE Assets Preview" },
     { name: "description", content: "Preview TCE Assets" },
@@ -30,7 +37,7 @@ export function meta({}: Route.MetaArgs) {
       property: "og:description",
       content: "Browse and preview TCE educational video assets",
     },
-    { property: "og:image", content: "/og-image.png" },
+    { property: "og:image", content: `${origin}/og-image.png` },
     { property: "og:image:width", content: "1200" },
     { property: "og:image:height", content: "630" },
   ];
