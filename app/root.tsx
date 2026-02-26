@@ -30,6 +30,7 @@ export const meta: Route.MetaFunction = ({ data }) => {
     },
     { property: "og:type", content: "website" },
     { property: "og:site_name", content: "TCE Preview" },
+    { property: "og:url", content: origin },
     { property: "og:title", content: "TCE Preview" },
     {
       property: "og:description",

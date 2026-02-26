@@ -32,6 +32,7 @@ export function meta({ data }: Route.MetaArgs) {
     { name: "description", content: "Preview TCE Assets" },
     { property: "og:type", content: "website" },
     { property: "og:site_name", content: "TCE Preview" },
+    { property: "og:url", content: origin },
     { property: "og:title", content: "TCE Assets Preview" },
     {
       property: "og:description",

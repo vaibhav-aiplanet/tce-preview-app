@@ -50,7 +50,13 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         .replace(/\+/g, " ")
     : "";
 
-  return Response.json({ title, grade, bookName, origin: url.origin });
+  return Response.json({
+    title,
+    grade,
+    bookName,
+    origin: url.origin,
+    pageUrl: url.href,
+  });
 }
 
 export function meta({ data, params }: Route.MetaArgs) {
@@ -62,6 +68,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     grade: string;
     bookName: string;
     origin: string;
+    pageUrl: string;
   } | null;
   const title = loaderData?.title || `Asset ${params.assetId}`;
   const origin = loaderData?.origin || "";
@@ -73,6 +80,7 @@ export function meta({ data, params }: Route.MetaArgs) {
     { title: `${title} | TCE Preview` },
     { property: "og:type", content: "video.other" },
     { property: "og:site_name", content: "TCE Preview" },
+    { property: "og:url", content: loaderData?.pageUrl || "" },
     { property: "og:title", content: title },
     { property: "og:description", content: `Preview TCE asset: ${title}` },
     {
