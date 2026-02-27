@@ -51,7 +51,7 @@ export async function fetchToken(): Promise<TokenData | undefined> {
     params.append("school_name", "Pluto Interstellar CBSE School");
     params.append("role", "Teacher");
     params.append("grant_type", "password");
-    params.append("user_name", "sunil");
+    params.append("user_name", "pluto");
 
     const response = await axios.post<ApiResponse<TokenData>>(
       `${env.api_url}/v1/api/user/tceplayer/token`,
