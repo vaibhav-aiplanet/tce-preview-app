@@ -48,7 +48,7 @@ export async function fetchClientId(): Promise<ClientId | undefined> {
 export async function fetchToken(): Promise<TokenData | undefined> {
   try {
     const params = new URLSearchParams();
-    params.append("school_name", "Azvasa Demo School");
+    params.append("school_name", "Pluto Interstellar CBSE School");
     params.append("role", "Teacher");
     params.append("grant_type", "password");
     params.append("user_name", "sunil");
