@@ -8,15 +8,15 @@
     },
     {
       "source": "/tceplayer-two/:path*",
-      "destination": "https://ce-qa-azvasa.devstudi.com/tceplayer-two/:path*"
+      "destination": "https://azvasa.tataclassedgeonline.com/tceplayer-two/:path*"
     },
     {
       "source": "/tce-repo-api/:path*",
-      "destination": "https://ce-qa-azvasa.devstudi.com/tce-repo-api/:path*"
+      "destination": "https://azvasa.tataclassedgeonline.com/tce-repo-api/:path*"
     },
     {
       "source": "/tce-teach-api/:path*",
-      "destination": "https://ce-qa-azvasa.devstudi.com/tce-teach-api/:path*"
+      "destination": "https://azvasa.tataclassedgeonline.com/tce-teach-api/:path*"
     }
   ]
 }
