@@ -48,10 +48,15 @@ export async function fetchClientId(): Promise<ClientId | undefined> {
 export async function fetchToken(): Promise<TokenData | undefined> {
   try {
     const params = new URLSearchParams();
-    params.append("school_name", "Azvasa Demo School");
+    // params.append("school_name", "Azvasa Demo School");
+    // params.append("role", "Teacher");
+    // params.append("grant_type", "password");
+    // params.append("user_name", "sunil");
+
+    params.append("school_name", "Pluto Interstellar CBSE School");
     params.append("role", "Teacher");
     params.append("grant_type", "password");
-    params.append("user_name", "sunil");
+    params.append("user_name", "user");
 
     const response = await axios.post<ApiResponse<TokenData>>(
       `${env.api_url}/v1/api/user/tceplayer/token`,
@@ -64,8 +69,12 @@ export async function fetchToken(): Promise<TokenData | undefined> {
       },
     );
 
-    console.log("token:", response.data.data);
-    return response.data.data;
+    const tokenData = response.data.data;
+    if (tokenData?.access_token) {
+      document.cookie = `access_token=${tokenData.access_token}; path=/; SameSite=Lax`;
+    }
+    console.log("token:", tokenData);
+    return tokenData;
   } catch (error) {
     getErrorMessage(error);
   }
