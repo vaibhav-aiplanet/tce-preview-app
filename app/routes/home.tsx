@@ -39,6 +39,11 @@ export async function clientLoader() {
   const userInfo = await ensureAuthenticated();
   return userInfo;
 }
+clientLoader.hydrate = true as const;
+
+export function HydrateFallback() {
+  return null;
+}
 
 export default function Home() {
   const navigate = useNavigate();
