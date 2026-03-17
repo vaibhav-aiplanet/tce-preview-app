@@ -53,7 +53,8 @@ export async function fetchToken(): Promise<TokenData | undefined> {
     // params.append("grant_type", "password");
     // params.append("user_name", "sunil");
 
-    params.append("school_name", "Pluto Interstellar CBSE School");
+    // params.append("school_name", "Pluto Interstellar CBSE School");
+    params.append("school_name", "Samsidh International School HSR Extension");
     params.append("role", "Teacher");
     params.append("grant_type", "password");
     params.append("user_name", "user");
