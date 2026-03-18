@@ -13,6 +13,8 @@ interface AssetMapping {
   mimeType?: string;
   assetType?: string;
   subType?: string;
+  mappedTo?: "Teacher" | "Student";
+  studentType?: "Study" | "Revision";
 }
 
 export async function fetchSubjects(

@@ -58,7 +58,17 @@ export async function action({ request }: Route.ActionArgs) {
     mimeType,
     assetType,
     subType,
+    mappedTo,
+    studentType,
   } = body;
+
+  const contentConsumer = mappedTo === "Student" ? "STUDENT" : "TEACHER";
+  const contentType =
+    mappedTo === "Student"
+      ? studentType === "Revision"
+        ? "REVISION"
+        : "STUDY"
+      : null;
 
   if (!assetId || !subjectId || !chapterId || !createdBy || !gradeId) {
     return Response.json({ error: "Missing fields" }, { status: 400 });
@@ -105,6 +115,8 @@ export async function action({ request }: Route.ActionArgs) {
         .update(chapter_assets)
         .set({
           chapter_id: chapterId,
+          content_consumer: contentConsumer as typeof chapter_assets.$inferInsert.content_consumer,
+          content_type: contentType as typeof chapter_assets.$inferInsert.content_type,
           modified_at: now,
           last_modified_by: createdBy,
         })
@@ -128,8 +140,8 @@ export async function action({ request }: Route.ActionArgs) {
           "ASSET_MEDIA",
         ) as typeof chapter_assets.$inferInsert.asset_type,
         chapter_id: chapterId,
-        content_consumer: "TEACHER",
-        content_type: "STUDY",
+        content_consumer: contentConsumer as typeof chapter_assets.$inferInsert.content_consumer,
+        content_type: contentType as typeof chapter_assets.$inferInsert.content_type,
         title: title || "",
         created_at: now,
         created_by: createdBy,

@@ -29,6 +29,8 @@ type CurriculumState = {
   selectedSubject: string;
   selectedChapter: string;
   selectedSubtopic: string;
+  mappedTo: "Teacher" | "Student" | "";
+  studentType: "Study" | "Revision" | "";
   isMapped: boolean;
   saving: boolean;
 };
@@ -50,9 +52,15 @@ type CurriculumAction =
   | { type: "SELECT_GRADE"; grade: string }
   | { type: "SET_SUBJECTS"; subjects: CurriculumItem[] }
   | { type: "SELECT_SUBJECT"; subject: string }
-  | { type: "SET_CHAPTERS_AND_SUBTOPICS"; chapters: CurriculumItem[]; subtopics: CurriculumItem[] }
+  | {
+      type: "SET_CHAPTERS_AND_SUBTOPICS";
+      chapters: CurriculumItem[];
+      subtopics: CurriculumItem[];
+    }
   | { type: "SELECT_CHAPTER"; chapter: string }
   | { type: "SELECT_SUBTOPIC"; subtopic: string }
+  | { type: "SELECT_MAPPED_TO"; mappedTo: "Teacher" | "Student" }
+  | { type: "SELECT_STUDENT_TYPE"; studentType: "Study" | "Revision" }
   | { type: "SET_MAPPED"; isMapped: boolean }
   | { type: "SET_SAVING"; saving: boolean };
 
@@ -65,6 +73,8 @@ const initialState: CurriculumState = {
   selectedSubject: "",
   selectedChapter: "",
   selectedSubtopic: "",
+  mappedTo: "Teacher",
+  studentType: "",
   isMapped: false,
   saving: false,
 };
@@ -157,6 +167,16 @@ function curriculumReducer(
     case "SELECT_SUBTOPIC":
       return { ...state, selectedSubtopic: action.subtopic };
 
+    case "SELECT_MAPPED_TO":
+      return {
+        ...state,
+        mappedTo: action.mappedTo,
+        studentType: action.mappedTo === "Student" ? state.studentType : "",
+      };
+
+    case "SELECT_STUDENT_TYPE":
+      return { ...state, studentType: action.studentType };
+
     case "SET_MAPPED":
       return { ...state, isMapped: action.isMapped };
 
@@ -182,6 +202,8 @@ export default function CurriculumFilters({
     selectedSubject,
     selectedChapter,
     selectedSubtopic,
+    mappedTo,
+    studentType,
     isMapped,
     saving,
   } = state;
@@ -263,7 +285,10 @@ export default function CurriculumFilters({
     });
   }, [selectedSubject, selectedBoard, selectedGrade]);
 
-  const canSave = selectedSubject && selectedChapter;
+  const canSave =
+    selectedSubject &&
+    selectedChapter &&
+    (mappedTo !== "Student" || studentType);
 
   const handleSave = async () => {
     try {
@@ -284,6 +309,8 @@ export default function CurriculumFilters({
         mimeType: asset?.mimeType || "",
         assetType: asset?.assetType || "",
         subType: asset?.subType || "",
+        mappedTo: mappedTo || undefined,
+        studentType: (studentType as "Study" | "Revision") || undefined,
       });
       dispatch({ type: "SET_MAPPED", isMapped: true });
     } catch (error) {
@@ -295,155 +322,225 @@ export default function CurriculumFilters({
   };
 
   return (
-    <div className="flex flex-wrap items-end gap-3 border-b border-border/40 px-4 py-3">
-      <span className="self-center text-xs font-medium text-muted">
-        Map to:
-      </span>
+    <div className="flex w-full flex-col border-b border-border/40">
+      {/* Row 1: Map to + Student type — 2 equal columns */}
+      <div className="grid grid-cols-6 gap-3 px-4 py-2">
+        <div className="flex flex-col gap-1">
+          <Select
+            className="w-full"
+            placeholder="Consumer"
+            value={mappedTo || null}
+            onChange={(value) =>
+              dispatch({
+                type: "SELECT_MAPPED_TO",
+                mappedTo: value as "Teacher" | "Student",
+              })
+            }
+          >
+            <Select.Trigger>
+              <Select.Value className="truncate" />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="Teacher" textValue="Teacher">
+                  Teacher
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="Student" textValue="Student">
+                  Student
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
+          </Select>
+        </div>
 
-      <Select
-        className="w-32 data-[placeholder=true]:truncate"
-        placeholder="Board"
-        value={selectedBoard || null}
-        onChange={(value) =>
-          dispatch({ type: "SELECT_BOARD", board: String(value ?? "") })
-        }
-      >
-        <Select.Trigger>
-          <Select.Value className="truncate" />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            {boards.map((b) => (
-              <ListBox.Item key={b.id} id={b.id} textValue={b.name}>
-                {b.name}
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        <div className="flex flex-col gap-1">
+          <Select
+            className="w-full"
+            placeholder="Student Content Type"
+            isDisabled={mappedTo !== "Student"}
+            value={studentType || null}
+            onChange={(value) =>
+              dispatch({
+                type: "SELECT_STUDENT_TYPE",
+                studentType: value as "Study" | "Revision",
+              })
+            }
+          >
+            <Select.Trigger>
+              <Select.Value className="truncate" />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox>
+                <ListBox.Item id="Study" textValue="Study">
+                  Study
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+                <ListBox.Item id="Revision" textValue="Revision">
+                  Revision
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              </ListBox>
+            </Select.Popover>
+          </Select>
+        </div>
+      </div>
 
-      <Select
-        className="w-32 data-[placeholder=true]:truncate"
-        placeholder="Grade"
-        value={selectedGrade || null}
-        onChange={(value) =>
-          dispatch({ type: "SELECT_GRADE", grade: String(value ?? "") })
-        }
-      >
-        <Select.Trigger>
-          <Select.Value className="truncate" />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            {grades.map((g) => (
-              <ListBox.Item key={g.id} id={g.id} textValue={g.name}>
-                {g.name}
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
+      {/* Row 2: Board → Grade → Subject → Chapter → Subtopic + Save — 6 equal columns */}
+      <div className="grid grid-cols-6 items-end gap-3 px-4 py-2">
+        <Select
+          className="w-full"
+          placeholder="Board"
+          value={selectedBoard || null}
+          onChange={(value) =>
+            dispatch({ type: "SELECT_BOARD", board: String(value ?? "") })
+          }
+        >
+          <Select.Trigger>
+            <Select.Value className="truncate" />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {boards.map((b) => (
+                <ListBox.Item key={b.id} id={b.id} textValue={b.name}>
+                  {b.name}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
 
-      <Select
-        className="w-40"
-        placeholder="Subject"
-        value={selectedSubject || null}
-        onChange={(value) =>
-          dispatch({
-            type: "SELECT_SUBJECT",
-            subject: String(value ?? ""),
-          })
-        }
-      >
-        <Select.Trigger>
-          <Select.Value className="truncate" />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            {subjects.map((s) => (
-              <ListBox.Item key={s.id} id={s.id} textValue={s.name}>
-                {s.name}
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        <Select
+          className="w-full"
+          placeholder="Grade"
+          value={selectedGrade || null}
+          onChange={(value) =>
+            dispatch({ type: "SELECT_GRADE", grade: String(value ?? "") })
+          }
+        >
+          <Select.Trigger>
+            <Select.Value className="truncate" />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {grades.map((g) => (
+                <ListBox.Item key={g.id} id={g.id} textValue={g.name}>
+                  {g.name}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
 
-      <Select
-        className="w-48"
-        placeholder="Chapter"
-        isDisabled={!selectedSubject}
-        value={selectedChapter || null}
-        onChange={(value) =>
-          dispatch({
-            type: "SELECT_CHAPTER",
-            chapter: String(value ?? ""),
-          })
-        }
-      >
-        <Select.Trigger>
-          <Select.Value className="truncate" />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            {chapters.map((c) => (
-              <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
-                {c.name}
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        <Select
+          className="w-full"
+          placeholder="Subject"
+          value={selectedSubject || null}
+          onChange={(value) =>
+            dispatch({
+              type: "SELECT_SUBJECT",
+              subject: String(value ?? ""),
+            })
+          }
+        >
+          <Select.Trigger>
+            <Select.Value className="truncate" />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {subjects.map((s) => (
+                <ListBox.Item key={s.id} id={s.id} textValue={s.name}>
+                  {s.name}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
 
-      <Select
-        className="w-40"
-        placeholder="Subtopic"
-        isDisabled={!selectedChapter}
-        value={selectedSubtopic || null}
-        onChange={(value) =>
-          dispatch({
-            type: "SELECT_SUBTOPIC",
-            subtopic: String(value ?? ""),
-          })
-        }
-      >
-        <Select.Trigger>
-          <Select.Value className="truncate" />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            {subtopics.map((st) => (
-              <ListBox.Item key={st.id} id={st.id} textValue={st.name}>
-                {st.name}
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            ))}
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        <Select
+          className="w-full"
+          placeholder="Chapter"
+          isDisabled={!selectedSubject}
+          value={selectedChapter || null}
+          onChange={(value) =>
+            dispatch({
+              type: "SELECT_CHAPTER",
+              chapter: String(value ?? ""),
+            })
+          }
+        >
+          <Select.Trigger>
+            <Select.Value className="truncate" />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {chapters.map((c) => (
+                <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
+                  {c.name}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
 
-      <Button
-        size="sm"
-        onPress={handleSave}
-        isDisabled={!canSave || saving}
-        isPending={saving}
-      >
-        {({ isPending }) => (
-          <>
-            {isPending && <Spinner color="current" size="sm" />}
-            {saving ? "Saving..." : isMapped ? "Update Mapping" : "Add Mapping"}
-          </>
-        )}
-      </Button>
+        <Select
+          className="w-full"
+          placeholder="Subtopic"
+          isDisabled={!selectedChapter}
+          value={selectedSubtopic || null}
+          onChange={(value) =>
+            dispatch({
+              type: "SELECT_SUBTOPIC",
+              subtopic: String(value ?? ""),
+            })
+          }
+        >
+          <Select.Trigger>
+            <Select.Value className="truncate" />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {subtopics.map((st) => (
+                <ListBox.Item key={st.id} id={st.id} textValue={st.name}>
+                  {st.name}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+
+        <Button
+          size="sm"
+          className="w-full"
+          onPress={handleSave}
+          isDisabled={!canSave || saving}
+          isPending={saving}
+        >
+          {({ isPending }) => (
+            <>
+              {isPending && <Spinner color="current" size="sm" />}
+              {saving
+                ? "Saving..."
+                : isMapped
+                  ? "Update Mapping"
+                  : "Add Mapping"}
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
