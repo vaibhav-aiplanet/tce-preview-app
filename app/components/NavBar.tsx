@@ -17,6 +17,9 @@ export default function NavBar() {
       <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
         Home
       </Button>
+      <Button variant="ghost" size="sm" onPress={() => navigate("/mapped-assets")}>
+        Mapped Assets
+      </Button>
       <Button variant="ghost" size="sm" onPress={logout}>
         Logout
       </Button>

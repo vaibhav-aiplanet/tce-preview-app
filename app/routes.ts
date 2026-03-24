@@ -14,7 +14,10 @@ export default [
   route("_api/grades", "routes/api.grades.ts"),
   route("_api/og-image", "routes/api.og-image.tsx"),
 
+  route("_api/mapped-assets", "routes/api.mapped-assets.ts"),
+
   route("auth/callback", "routes/auth.callback.tsx"),
+  route("mapped-assets", "routes/mapped-assets.tsx"),
   layout("routes/home.tsx", [
     index("routes/home-index.tsx"),
     route(":assetId", "routes/asset.tsx"),
