@@ -26,7 +26,7 @@ export default function PlayerDialog({
       variant="blur"
     >
       <Modal.Container size="lg" placement="center">
-        <Modal.Dialog className="h-[80vh] max-h-[80vh] w-[90vw] max-w-300 overflow-hidden p-0">
+        <Modal.Dialog className="h-[90vh] max-h-[90vh] w-[95vw] max-w-400 overflow-hidden p-0">
           <Modal.CloseTrigger className="top-3 right-3" />
           <Modal.Header className="px-4 pt-4 pb-2">
             <Modal.Heading>{asset.title || "Untitled"}</Modal.Heading>

@@ -70,3 +70,11 @@ export async function saveMapping(
     body: JSON.stringify({ assetId, ...mapping }),
   });
 }
+
+export async function deleteMapping(assetId: string): Promise<void> {
+  await fetch("/_api/mapping", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assetId }),
+  });
+}

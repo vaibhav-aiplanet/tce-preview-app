@@ -7,6 +7,7 @@ import {
   fetchSubtopics,
   fetchMapping,
   saveMapping,
+  deleteMapping,
   type CurriculumItem,
 } from "~/lib/curriculum-api";
 
@@ -33,6 +34,7 @@ type CurriculumState = {
   studentType: "Study" | "Revision" | "";
   isMapped: boolean;
   saving: boolean;
+  deleting: boolean;
 };
 
 type CurriculumAction =
@@ -62,7 +64,8 @@ type CurriculumAction =
   | { type: "SELECT_MAPPED_TO"; mappedTo: "Teacher" | "Student" }
   | { type: "SELECT_STUDENT_TYPE"; studentType: "Study" | "Revision" }
   | { type: "SET_MAPPED"; isMapped: boolean }
-  | { type: "SET_SAVING"; saving: boolean };
+  | { type: "SET_SAVING"; saving: boolean }
+  | { type: "SET_DELETING"; deleting: boolean };
 
 const initialState: CurriculumState = {
   subjects: [],
@@ -77,6 +80,7 @@ const initialState: CurriculumState = {
   studentType: "",
   isMapped: false,
   saving: false,
+  deleting: false,
 };
 
 function curriculumReducer(
@@ -183,6 +187,9 @@ function curriculumReducer(
     case "SET_SAVING":
       return { ...state, saving: action.saving };
 
+    case "SET_DELETING":
+      return { ...state, deleting: action.deleting };
+
     default:
       return state;
   }
@@ -206,6 +213,7 @@ export default function CurriculumFilters({
     studentType,
     isMapped,
     saving,
+    deleting,
   } = state;
 
   // Track whether we're in the middle of initializing from a mapping
@@ -289,6 +297,18 @@ export default function CurriculumFilters({
     selectedSubject &&
     selectedChapter &&
     (mappedTo !== "Student" || studentType);
+
+  const handleDelete = async () => {
+    try {
+      dispatch({ type: "SET_DELETING", deleting: true });
+      await deleteMapping(assetId);
+      dispatch({ type: "INIT_NO_MAPPING" });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      dispatch({ type: "SET_DELETING", deleting: false });
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -522,24 +542,42 @@ export default function CurriculumFilters({
           </Select.Popover>
         </Select>
 
-        <Button
-          size="sm"
-          className="w-full"
-          onPress={handleSave}
-          isDisabled={!canSave || saving}
-          isPending={saving}
-        >
-          {({ isPending }) => (
-            <>
-              {isPending && <Spinner color="current" size="sm" />}
-              {saving
-                ? "Saving..."
-                : isMapped
-                  ? "Update Mapping"
-                  : "Add Mapping"}
-            </>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="flex-1"
+            onPress={handleSave}
+            isDisabled={!canSave || saving || deleting}
+            isPending={saving}
+          >
+            {({ isPending }) => (
+              <>
+                {isPending && <Spinner color="current" size="sm" />}
+                {saving
+                  ? "Saving..."
+                  : isMapped
+                    ? "Update Mapping"
+                    : "Add Mapping"}
+              </>
+            )}
+          </Button>
+          {isMapped && (
+            <Button
+              size="sm"
+              className="bg-red-600 text-white mr-2"
+              onPress={handleDelete}
+              isDisabled={saving || deleting}
+              isPending={deleting}
+            >
+              {({ isPending }) => (
+                <>
+                  {isPending && <Spinner color="current" size="sm" />}
+                  {deleting ? "Deleting..." : "Delete"}
+                </>
+              )}
+            </Button>
           )}
-        </Button>
+        </div>
       </div>
     </div>
   );

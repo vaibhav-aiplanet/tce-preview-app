@@ -42,6 +42,24 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  if (request.method === "DELETE") {
+    const { assetId } = await request.json();
+    if (!assetId) {
+      return Response.json({ error: "Missing assetId" }, { status: 400 });
+    }
+
+    await content_db.transaction(async (tx) => {
+      await tx
+        .delete(tce_asset_mapping)
+        .where(eq(tce_asset_mapping.asset_id, assetId));
+      await tx
+        .delete(chapter_assets)
+        .where(eq(chapter_assets.asset_id, assetId));
+    });
+
+    return Response.json({ ok: true });
+  }
+
   if (request.method !== "POST") {
     return Response.json({ error: "Method not allowed" }, { status: 405 });
   }
