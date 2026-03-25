@@ -7,7 +7,7 @@ import {
   useMatches,
   useSearchParams,
 } from "react-router";
-import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
+import { Button, Select, Label, ListBox, Spinner, Pagination } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import { ensureAuthenticated } from "~/lib/auth";
 import { useBatchAssetData } from "~/lib/tce-queries";
@@ -229,26 +229,51 @@ export default function Home() {
 
             {totalPages > 1 && batchData && (
               <div className="flex items-center gap-3">
-                <Button
-                  variant={page === 0 ? "ghost" : "primary"}
-                  size="sm"
-                  isDisabled={page === 0}
-                  onPress={() => goToPage(page - 1)}
-                >
-                  Previous
-                </Button>
                 <span className="text-sm text-muted">
-                  Page <span className="font-extrabold">{page + 1}</span> of{" "}
-                  {totalPages}
+                  Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, batchAssetIds.length)} of {batchAssetIds.length}
                 </span>
-                <Button
-                  size="sm"
-                  variant={page >= totalPages - 1 ? "ghost" : "primary"}
-                  isDisabled={page >= totalPages - 1}
-                  onPress={() => goToPage(page + 1)}
-                >
-                  Next
-                </Button>
+                <Pagination>
+                  <Pagination.Content>
+                    <Pagination.Item>
+                      <Pagination.Previous
+                        isDisabled={page === 0}
+                        onPress={() => goToPage(page - 1)}
+                      />
+                    </Pagination.Item>
+                    {Array.from({ length: totalPages }, (_, i) => i).map((p) => {
+                      if (
+                        p === 0 ||
+                        p === totalPages - 1 ||
+                        (p >= page - 1 && p <= page + 1)
+                      ) {
+                        return (
+                          <Pagination.Item key={p}>
+                            <Pagination.Link
+                              isActive={p === page}
+                              onPress={() => goToPage(p)}
+                            >
+                              {p + 1}
+                            </Pagination.Link>
+                          </Pagination.Item>
+                        );
+                      }
+                      if (p === page - 2 || p === page + 2) {
+                        return (
+                          <Pagination.Item key={p}>
+                            <Pagination.Ellipsis />
+                          </Pagination.Item>
+                        );
+                      }
+                      return null;
+                    })}
+                    <Pagination.Item>
+                      <Pagination.Next
+                        isDisabled={page >= totalPages - 1}
+                        onPress={() => goToPage(page + 1)}
+                      />
+                    </Pagination.Item>
+                  </Pagination.Content>
+                </Pagination>
               </div>
             )}
           </div>

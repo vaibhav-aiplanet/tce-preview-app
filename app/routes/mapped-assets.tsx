@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Input, Select, ListBox, Spinner } from "@heroui/react";
+import { Input, Select, ListBox, Spinner, Pagination } from "@heroui/react";
 import NavBar from "~/components/NavBar";
 import PlayerDialog from "~/components/PlayerDialog";
 import { useTCEPlayerData } from "~/lib/tce-queries";
+
+const PAGE_SIZE = 20;
 
 interface MappedAsset {
   assetId: string;
@@ -34,6 +36,7 @@ export default function MappedAssetsPage() {
   });
 
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [titleFilter, setTitleFilter] = useState("");
   const [gradeFilter, setGradeFilter] = useState("");
   const [subjectFilter, setSubjectFilter] = useState("");
@@ -47,6 +50,7 @@ export default function MappedAssetsPage() {
     setChapterFilter("");
     setSubtopicFilter("");
     setConsumerFilter("");
+    setCurrentPage(1);
   };
 
   const handleSubjectChange = (value: string) => {
@@ -54,17 +58,20 @@ export default function MappedAssetsPage() {
     setChapterFilter("");
     setSubtopicFilter("");
     setConsumerFilter("");
+    setCurrentPage(1);
   };
 
   const handleChapterChange = (value: string) => {
     setChapterFilter(value);
     setSubtopicFilter("");
     setConsumerFilter("");
+    setCurrentPage(1);
   };
 
   const handleSubtopicChange = (value: string) => {
     setSubtopicFilter(value);
     setConsumerFilter("");
+    setCurrentPage(1);
   };
 
   // Progressive filtering: each level filters based on all filters to its left
@@ -101,6 +108,12 @@ export default function MappedAssetsPage() {
     });
   }, [afterSubtopic, titleFilter, consumerFilter]);
 
+  const totalPages = Math.ceil(filteredAssets.length / PAGE_SIZE);
+  const paginatedAssets = useMemo(
+    () => filteredAssets.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filteredAssets, currentPage],
+  );
+
   const { data: playerData, isLoading: playerLoading } = useTCEPlayerData(
     selectedAssetId || "",
   );
@@ -133,7 +146,7 @@ export default function MappedAssetsPage() {
               className="w-[220px]"
               placeholder="Search by title..."
               value={titleFilter}
-              onChange={(e) => setTitleFilter(e.target.value)}
+              onChange={(e) => { setTitleFilter(e.target.value); setCurrentPage(1); }}
             />
 
             <Select
@@ -244,7 +257,7 @@ export default function MappedAssetsPage() {
               className="w-[160px]"
               placeholder="Consumer"
               value={consumerFilter || null}
-              onChange={(value) => setConsumerFilter(String(value ?? ""))}
+              onChange={(value) => { setConsumerFilter(String(value ?? "")); setCurrentPage(1); }}
             >
               <Select.Trigger>
                 <Select.Value className="truncate" />
@@ -279,56 +292,108 @@ export default function MappedAssetsPage() {
         )}
 
         {filteredAssets.length > 0 && (
-          <div className="overflow-x-auto rounded-lg border border-border/40">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/40 bg-muted/30">
-                  <th className="px-4 py-3 text-left font-medium">Title</th>
-                  <th className="px-4 py-3 text-left font-medium">Grade</th>
-                  <th className="px-4 py-3 text-left font-medium">Subject</th>
-                  <th className="px-4 py-3 text-left font-medium">Chapter</th>
-                  <th className="px-4 py-3 text-left font-medium">Subtopic</th>
-                  <th className="px-4 py-3 text-left font-medium">Consumer</th>
-                  <th className="px-4 py-3 text-left font-medium">Type</th>
-                  <th className="px-4 py-3 text-left font-medium">Mapped By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAssets.map((asset) => (
-                  <tr
-                    key={asset.assetId}
-                    onClick={() => setSelectedAssetId(asset.assetId)}
-                    className="cursor-pointer border-b border-border/20 hover:bg-muted/10 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-primary">
-                      {asset.title}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.grade || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.subject || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.chapter || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.subtopic || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.consumer || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.contentType || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {asset.createdBy || "—"}
-                    </td>
+          <>
+            <div className="overflow-x-auto rounded-lg border border-border/40">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/40 bg-muted/30">
+                    <th className="px-4 py-3 text-left font-medium">Title</th>
+                    <th className="px-4 py-3 text-left font-medium">Grade</th>
+                    <th className="px-4 py-3 text-left font-medium">Subject</th>
+                    <th className="px-4 py-3 text-left font-medium">Chapter</th>
+                    <th className="px-4 py-3 text-left font-medium">Subtopic</th>
+                    <th className="px-4 py-3 text-left font-medium">Consumer</th>
+                    <th className="px-4 py-3 text-left font-medium">Type</th>
+                    <th className="px-4 py-3 text-left font-medium">Mapped By</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginatedAssets.map((asset) => (
+                    <tr
+                      key={asset.assetId}
+                      onClick={() => setSelectedAssetId(asset.assetId)}
+                      className="cursor-pointer border-b border-border/20 hover:bg-muted/10 transition-colors"
+                    >
+                      <td className="px-4 py-3 text-primary">
+                        {asset.title}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.grade || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.subject || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.chapter || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.subtopic || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.consumer || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.contentType || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {asset.createdBy || "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4">
+                <span className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredAssets.length)} of {filteredAssets.length}
+                </span>
+                <Pagination>
+                  <Pagination.Content>
+                    <Pagination.Item>
+                      <Pagination.Previous
+                        isDisabled={currentPage === 1}
+                        onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      />
+                    </Pagination.Item>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <Pagination.Item key={page}>
+                            <Pagination.Link
+                              isActive={page === currentPage}
+                              onPress={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </Pagination.Link>
+                          </Pagination.Item>
+                        );
+                      }
+                      if (page === currentPage - 2 || page === currentPage + 2) {
+                        return (
+                          <Pagination.Item key={page}>
+                            <Pagination.Ellipsis />
+                          </Pagination.Item>
+                        );
+                      }
+                      return null;
+                    })}
+                    <Pagination.Item>
+                      <Pagination.Next
+                        isDisabled={currentPage === totalPages}
+                        onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      />
+                    </Pagination.Item>
+                  </Pagination.Content>
+                </Pagination>
+              </div>
+            )}
+          </>
         )}
       </div>
 
