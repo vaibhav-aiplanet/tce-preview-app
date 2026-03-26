@@ -6,7 +6,6 @@ const TCEPlayer = ({
   expiresIn,
   asset,
 }: TCEPlayerProps) => {
-  console.log(asset);
   const [resourceStatus, setResourceStatus] = useState<
     "loading" | "loaded" | "error"
   >("loading");

@@ -15,6 +15,7 @@
         "axios": "^1.13.5",
         "drizzle-orm": "^0.45.1",
         "isbot": "^5.1.31",
+        "jotai": "^2.19.0",
         "postgres": "^3.4.8",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
@@ -30,6 +31,7 @@
         "@types/react": "^19.2.7",
         "@types/react-dom": "^19.2.3",
         "drizzle-kit": "^0.31.9",
+        "jotai-babel": "^0.1.0",
         "tailwindcss": "^4.1.13",
         "typescript": "^5.9.2",
         "vite": "^7.1.7",
@@ -773,6 +775,10 @@
     "isbot": ["isbot@5.1.34", "", {}, "sha512-aCMIBSKd/XPRYdiCQTLC8QHH4YT8B3JUADu+7COgYIZPvkeoMcUHMRjZLM9/7V8fCj+l7FSREc1lOPNjzogo/A=="],
 
     "jiti": ["jiti@2.6.1", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ=="],
+
+    "jotai": ["jotai@2.19.0", "", { "peerDependencies": { "@babel/core": ">=7.0.0", "@babel/template": ">=7.0.0", "@types/react": ">=17.0.0", "react": ">=17.0.0" }, "optionalPeers": ["@babel/core", "@babel/template", "@types/react", "react"] }, "sha512-r2wwxEXP1F2JteDLZEOPoIpAHhV89paKsN5GWVYndPNMMP/uVZDcC+fNj0A8NjKgaPWzdyO8Vp8YcYKe0uCEqQ=="],
+
+    "jotai-babel": ["jotai-babel@0.1.0", "", { "peerDependencies": { "@babel/core": ">=7.0.0", "@babel/template": ">=7.0.0", "jotai": ">=2.0.0" } }, "sha512-nNrxxP3c9IQpK4NaZdJBir0rdRcqebJgSc+IHJZNUtL2t7fVuwUG2cUxy9ObZJ6woih13NnSGTmbPuIR0v2Vqg=="],
 
     "js-tokens": ["js-tokens@4.0.0", "", {}, "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="],
 

@@ -10,6 +10,11 @@ import {
   deleteMapping,
   type CurriculumItem,
 } from "~/lib/curriculum-api";
+import {
+  useCurrentGrade,
+  useCurrentSubject,
+  useCurrentSubtopic,
+} from "~/store";
 
 interface CurriculumFiltersProps {
   assetId: string;
@@ -118,12 +123,6 @@ function curriculumReducer(
       return {
         ...state,
         selectedBoard: action.board,
-        subjects: [],
-        selectedSubject: "",
-        chapters: [],
-        selectedChapter: "",
-        subtopics: [],
-        selectedSubtopic: "",
       };
 
     case "SELECT_GRADE":
@@ -165,7 +164,6 @@ function curriculumReducer(
       return {
         ...state,
         selectedChapter: action.chapter,
-        selectedSubtopic: "",
       };
 
     case "SELECT_SUBTOPIC":
@@ -216,6 +214,10 @@ export default function CurriculumFilters({
     deleting,
   } = state;
 
+  const atomGrade = useCurrentGrade();
+  const atomSubject = useCurrentSubject();
+  const atomSubtopic = useCurrentSubtopic();
+
   // Track whether we're in the middle of initializing from a mapping
   // to avoid redundant fetches from the subjects/chapters effects
   const initializingRef = useRef(false);
@@ -244,6 +246,46 @@ export default function CurriculumFilters({
       if (!mapping) {
         dispatch({ type: "INIT_NO_MAPPING" });
         initializingRef.current = false;
+
+        // Preselect from atoms: grade → subjects → subject → subtopics → subtopic
+        if (atomGrade && grades.length > 0) {
+          const gradeMatch = grades.find(
+            (g) => g.name.toLowerCase() === atomGrade.toLowerCase() ||
+                   g.name.toLowerCase() === `grade ${atomGrade.toLowerCase()}`,
+          );
+          if (gradeMatch) {
+            dispatch({ type: "SELECT_GRADE", grade: gradeMatch.id });
+
+            if (atomSubject) {
+              const subjectsList = await fetchSubjects(undefined, gradeMatch.id);
+              if (cancelled) return;
+              dispatch({ type: "SET_SUBJECTS", subjects: subjectsList });
+
+              const subjectMatch = subjectsList.find(
+                (s) => s.name.toLowerCase() === atomSubject.toLowerCase(),
+              );
+              if (subjectMatch) {
+                dispatch({ type: "SELECT_SUBJECT", subject: subjectMatch.id });
+
+                const [ch, st] = await Promise.all([
+                  fetchChapters(subjectMatch.id, "", gradeMatch.id),
+                  fetchSubtopics(subjectMatch.id),
+                ]);
+                if (cancelled) return;
+                dispatch({ type: "SET_CHAPTERS_AND_SUBTOPICS", chapters: ch, subtopics: st });
+
+                if (atomSubtopic) {
+                  const subtopicMatch = st.find(
+                    (s) => s.name.toLowerCase() === atomSubtopic.toLowerCase(),
+                  );
+                  if (subtopicMatch) {
+                    dispatch({ type: "SELECT_SUBTOPIC", subtopic: subtopicMatch.id });
+                  }
+                }
+              }
+            }
+          }
+        }
         return;
       }
 
@@ -265,8 +307,9 @@ export default function CurriculumFilters({
 
   // Fetch subjects when board + grade are selected
   useEffect(() => {
-    if (!selectedBoard || !selectedGrade) return;
+    if (!selectedGrade) return;
     if (initializingRef.current) return;
+    if (!selectedBoard) return;
 
     fetchSubjects(selectedBoard, selectedGrade).then((data) => {
       dispatch({ type: "SET_SUBJECTS", subjects: data });
@@ -409,7 +452,7 @@ export default function CurriculumFilters({
         </div>
       </div>
 
-      {/* Row 2: Board → Grade → Subject → Chapter → Subtopic + Save — 6 equal columns */}
+      {/* Row 2: Board → Grade → Subject → Subtopic → Chapter + Save — 6 equal columns */}
       <div className="grid grid-cols-6 items-end gap-3 px-4 py-2">
         <Select
           className="w-full"
@@ -488,6 +531,34 @@ export default function CurriculumFilters({
 
         <Select
           className="w-full"
+          placeholder="Subtopic"
+          isDisabled={!selectedSubject}
+          value={selectedSubtopic || null}
+          onChange={(value) =>
+            dispatch({
+              type: "SELECT_SUBTOPIC",
+              subtopic: String(value ?? ""),
+            })
+          }
+        >
+          <Select.Trigger>
+            <Select.Value className="truncate" />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox>
+              {subtopics.map((st) => (
+                <ListBox.Item key={st.id} id={st.id} textValue={st.name}>
+                  {st.name}
+                  <ListBox.ItemIndicator />
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+
+        <Select
+          className="w-full"
           placeholder="Chapter"
           isDisabled={!selectedSubject}
           value={selectedChapter || null}
@@ -507,34 +578,6 @@ export default function CurriculumFilters({
               {chapters.map((c) => (
                 <ListBox.Item key={c.id} id={c.id} textValue={c.name}>
                   {c.name}
-                  <ListBox.ItemIndicator />
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
-
-        <Select
-          className="w-full"
-          placeholder="Subtopic"
-          isDisabled={!selectedChapter}
-          value={selectedSubtopic || null}
-          onChange={(value) =>
-            dispatch({
-              type: "SELECT_SUBTOPIC",
-              subtopic: String(value ?? ""),
-            })
-          }
-        >
-          <Select.Trigger>
-            <Select.Value className="truncate" />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              {subtopics.map((st) => (
-                <ListBox.Item key={st.id} id={st.id} textValue={st.name}>
-                  {st.name}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
               ))}

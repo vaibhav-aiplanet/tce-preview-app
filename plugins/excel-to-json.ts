@@ -36,6 +36,8 @@ export function excelToJsonPlugin(): Plugin {
       for (const file of files) {
         if (!/\.xls$/i.test(file) && !/\.xlsx$/i.test(file)) continue;
 
+        const [subject_name, subtopic_name] = file.split('-').slice(0, 2)
+
         const excelPath = path.join(gradeDir, file);
         const jsonName = file.replace(/\.xlsx?$/i, ".json");
         const jsonPath = path.join(gradeDir, jsonName);
@@ -48,7 +50,14 @@ export function excelToJsonPlugin(): Plugin {
         try {
           const buffer = fs.readFileSync(excelPath);
           const assetIds = parseAssetIdsFromBuffer(buffer);
-          fs.writeFileSync(jsonPath, JSON.stringify(assetIds, null, 2));
+
+          const json_data = {
+            subject_name,
+            assetIds,
+            subtopic_name: subtopic_name === "NA" ? null : subtopic_name
+          }
+
+          fs.writeFileSync(jsonPath, JSON.stringify(json_data, null, 2));
           generated++;
           console.log(
             `  Generated: azvasa/${entry.name}/${jsonName} (${assetIds.length} assets)`,
@@ -75,10 +84,11 @@ export function excelToJsonPlugin(): Plugin {
 
       if (jsonFiles.length > 0) {
         manifest[entry.name] = jsonFiles.map((f) => ({
-          name: f
-            .replace(/\.json$/, "")
-            .replace(/\+/g, " ")
-            .replace(/-\d{13}$/, ""),
+          name: `${f.split('-')[0]} ${f.split('-')[1]}`,
+          // name: f
+          //   .replace(/\.json$/, "")
+          //   .replace(/\+/g, " ")
+          //   .replace(/-\d{13}$/, ""),
           path: `/azvasa/${entry.name}/${f}`,
         }));
       }
