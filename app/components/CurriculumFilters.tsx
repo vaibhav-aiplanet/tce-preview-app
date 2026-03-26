@@ -50,7 +50,10 @@ type CurriculumAction =
         subjectId: string;
         chapterId: string;
         subtopicId: string;
+        mappedTo?: "Teacher" | "Student";
+        studentType?: "Study" | "Revision";
       };
+      subjects: CurriculumItem[];
       chapters: CurriculumItem[];
       subtopics: CurriculumItem[];
     }
@@ -101,8 +104,11 @@ function curriculumReducer(
         selectedSubject: action.mapping.subjectId,
         selectedChapter: action.mapping.chapterId,
         selectedSubtopic: action.mapping.subtopicId,
+        subjects: action.subjects,
         chapters: action.chapters,
         subtopics: action.subtopics,
+        mappedTo: action.mapping.mappedTo || "Teacher",
+        studentType: action.mapping.studentType || "",
       };
 
     case "INIT_NO_MAPPING":
@@ -289,13 +295,14 @@ export default function CurriculumFilters({
         return;
       }
 
-      const [ch, st] = await Promise.all([
+      const [subj, ch, st] = await Promise.all([
+        fetchSubjects(undefined, mapping.gradeId || ""),
         fetchChapters(mapping.subjectId, "", mapping.gradeId || ""),
         fetchSubtopics(mapping.subjectId),
       ]);
 
       if (cancelled) return;
-      dispatch({ type: "INIT_MAPPING", mapping, chapters: ch, subtopics: st });
+      dispatch({ type: "INIT_MAPPING", mapping, subjects: subj, chapters: ch, subtopics: st });
       initializingRef.current = false;
     }
 
