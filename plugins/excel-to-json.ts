@@ -39,8 +39,8 @@ export function excelToJsonPlugin(): Plugin {
         const [subject_name, subtopic_name] = file.split('-').slice(0, 2)
 
         const excelPath = path.join(gradeDir, file);
-        const jsonName = file.replace(/\.xlsx?$/i, ".json");
-        const jsonPath = path.join(gradeDir, jsonName);
+        const jsonName = file.replace(/\.xlsx?$/i, ".json").replace(' ', ';');
+        const jsonPath = path.join(gradeDir, jsonName)
 
         if (fs.existsSync(jsonPath)) {
           skipped++;
@@ -52,7 +52,7 @@ export function excelToJsonPlugin(): Plugin {
           const assetIds = parseAssetIdsFromBuffer(buffer);
 
           const json_data = {
-            subject_name,
+            subject_name: subject_name.replace(';', ' '),
             assetIds,
             subtopic_name: subtopic_name === "NA" ? null : subtopic_name
           }

@@ -225,7 +225,7 @@ export default function Home() {
                                     <ListBox>
                                         {filesForGrade.map((f) => (
                                             <ListBox.Item key={f.path} id={f.path} textValue={f.name}>
-                                                {f.name}
+                                                {f.name.replace(';', ' ')}
                                                 <ListBox.ItemIndicator />
                                             </ListBox.Item>
                                         ))}
