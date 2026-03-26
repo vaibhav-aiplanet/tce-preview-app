@@ -83,14 +83,17 @@ export function excelToJsonPlugin(): Plugin {
         .filter((f) => f.endsWith(".json"));
 
       if (jsonFiles.length > 0) {
-        manifest[entry.name] = jsonFiles.map((f) => ({
-          name: `${f.split('-')[0]} ${f.split('-')[1]}`,
-          // name: f
-          //   .replace(/\.json$/, "")
-          //   .replace(/\+/g, " ")
-          //   .replace(/-\d{13}$/, ""),
+        manifest[entry.name] = jsonFiles.map((f) => {
+          const[subject, subtopic] = f.split('-').slice(0, 2)
+          let name = subject;
+          if (subtopic !== "NA") {
+            name = `${name} - ${subtopic}`
+          }
+        return {
+          name,
           path: `/azvasa/${entry.name}/${f}`,
-        }));
+        }
+        });
       }
     }
     fs.writeFileSync(
