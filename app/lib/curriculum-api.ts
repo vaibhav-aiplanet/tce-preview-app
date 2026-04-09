@@ -3,7 +3,7 @@ export interface CurriculumItem {
   name: string;
 }
 
-interface AssetMapping {
+export interface AssetMapping {
   gradeId: string;
   subjectId: string;
   chapterId: string;

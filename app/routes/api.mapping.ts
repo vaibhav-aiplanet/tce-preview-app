@@ -132,6 +132,10 @@ export async function action({ request }: Route.ActionArgs) {
       await tx
         .update(chapter_assets)
         .set({
+          title: title || "",
+          asset_mime_type: toEnumFormat(mimeType || "", "MP4") as typeof chapter_assets.$inferInsert.asset_mime_type,
+          asset_sub_type: toEnumFormat(subType || "", "VIDEO") as typeof chapter_assets.$inferInsert.asset_sub_type,
+          asset_type: toEnumFormat(assetType || "", "ASSET_MEDIA") as typeof chapter_assets.$inferInsert.asset_type,
           chapter_id: chapterId,
           content_consumer: contentConsumer as typeof chapter_assets.$inferInsert.content_consumer,
           content_type: contentType as typeof chapter_assets.$inferInsert.content_type,
