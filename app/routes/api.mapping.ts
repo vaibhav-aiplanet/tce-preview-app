@@ -49,12 +49,20 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     await content_db.transaction(async (tx) => {
+      const mapping = await tx
+        .select({ chapter_asset_id: tce_asset_mapping.chapter_asset_id })
+        .from(tce_asset_mapping)
+        .where(eq(tce_asset_mapping.asset_id, assetId));
+
       await tx
         .delete(tce_asset_mapping)
         .where(eq(tce_asset_mapping.asset_id, assetId));
-      await tx
-        .delete(chapter_assets)
-        .where(eq(chapter_assets.asset_id, assetId));
+
+      if (mapping[0]?.chapter_asset_id) {
+        await tx
+          .delete(chapter_assets)
+          .where(eq(chapter_assets.id, mapping[0].chapter_asset_id));
+      }
     });
 
     return Response.json({ ok: true });
@@ -93,6 +101,7 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const subtopicIdValue = subtopicId || null;
+  const chapterIdRaw = chapterId.replace(/-/g, "");
   const now = Date.now();
 
   await content_db.transaction(async (tx) => {
@@ -101,7 +110,38 @@ export async function action({ request }: Route.ActionArgs) {
       .from(tce_asset_mapping)
       .where(eq(tce_asset_mapping.asset_id, assetId));
 
-    if (existing.length > 0) {
+    const chapterAssetValues = {
+      active: true,
+      deleted: false,
+      asset_id: assetId,
+      asset_mime_type: toEnumFormat(
+        mimeType || "",
+        "MP4",
+      ) as typeof chapter_assets.$inferInsert.asset_mime_type,
+      asset_sub_type: toEnumFormat(
+        subType || "",
+        "VIDEO",
+      ) as typeof chapter_assets.$inferInsert.asset_sub_type,
+      asset_type: toEnumFormat(
+        assetType || "",
+        "ASSET_MEDIA",
+      ) as typeof chapter_assets.$inferInsert.asset_type,
+      chapter_id: chapterIdRaw,
+      content_consumer: contentConsumer as typeof chapter_assets.$inferInsert.content_consumer,
+      content_type: contentType as typeof chapter_assets.$inferInsert.content_type,
+      title: title || "",
+    };
+
+    if (existing.length > 0 && existing[0].chapter_asset_id) {
+      await tx
+        .update(chapter_assets)
+        .set({
+          ...chapterAssetValues,
+          modified_at: now,
+          last_modified_by: createdBy,
+        })
+        .where(eq(chapter_assets.id, existing[0].chapter_asset_id));
+
       await tx
         .update(tce_asset_mapping)
         .set({
@@ -113,62 +153,39 @@ export async function action({ request }: Route.ActionArgs) {
         })
         .where(eq(tce_asset_mapping.asset_id, assetId));
     } else {
-      await tx.insert(tce_asset_mapping).values({
-        asset_id: assetId,
-        grade_id: gradeId,
-        subject_id: subjectId,
-        chapter_id: chapterId,
-        subtopic_id: subtopicIdValue,
-        created_by: createdBy,
-      });
-    }
+      const newChapterAssetId = generateId();
 
-    const existingChapterAsset = await tx
-      .select()
-      .from(chapter_assets)
-      .where(eq(chapter_assets.asset_id, assetId));
-
-    if (existingChapterAsset.length > 0) {
-      await tx
-        .update(chapter_assets)
-        .set({
-          title: title || "",
-          asset_mime_type: toEnumFormat(mimeType || "", "MP4") as typeof chapter_assets.$inferInsert.asset_mime_type,
-          asset_sub_type: toEnumFormat(subType || "", "VIDEO") as typeof chapter_assets.$inferInsert.asset_sub_type,
-          asset_type: toEnumFormat(assetType || "", "ASSET_MEDIA") as typeof chapter_assets.$inferInsert.asset_type,
-          chapter_id: chapterId,
-          content_consumer: contentConsumer as typeof chapter_assets.$inferInsert.content_consumer,
-          content_type: contentType as typeof chapter_assets.$inferInsert.content_type,
-          modified_at: now,
-          last_modified_by: createdBy,
-        })
-        .where(eq(chapter_assets.asset_id, assetId));
-    } else {
       await tx.insert(chapter_assets).values({
-        id: generateId(),
-        active: true,
-        deleted: false,
-        asset_id: assetId,
-        asset_mime_type: toEnumFormat(
-          mimeType || "",
-          "MP4",
-        ) as typeof chapter_assets.$inferInsert.asset_mime_type,
-        asset_sub_type: toEnumFormat(
-          subType || "",
-          "VIDEO",
-        ) as typeof chapter_assets.$inferInsert.asset_sub_type,
-        asset_type: toEnumFormat(
-          assetType || "",
-          "ASSET_MEDIA",
-        ) as typeof chapter_assets.$inferInsert.asset_type,
-        chapter_id: chapterId,
-        content_consumer: contentConsumer as typeof chapter_assets.$inferInsert.content_consumer,
-        content_type: contentType as typeof chapter_assets.$inferInsert.content_type,
-        title: title || "",
+        id: newChapterAssetId,
+        ...chapterAssetValues,
         created_at: now,
         created_by: createdBy,
         modified_at: now,
       });
+
+      if (existing.length > 0) {
+        await tx
+          .update(tce_asset_mapping)
+          .set({
+            chapter_asset_id: newChapterAssetId,
+            grade_id: gradeId,
+            subject_id: subjectId,
+            chapter_id: chapterId,
+            subtopic_id: subtopicIdValue,
+            created_by: createdBy,
+          })
+          .where(eq(tce_asset_mapping.asset_id, assetId));
+      } else {
+        await tx.insert(tce_asset_mapping).values({
+          asset_id: assetId,
+          chapter_asset_id: newChapterAssetId,
+          grade_id: gradeId,
+          subject_id: subjectId,
+          chapter_id: chapterId,
+          subtopic_id: subtopicIdValue,
+          created_by: createdBy,
+        });
+      }
     }
   });
 
