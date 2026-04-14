@@ -12,7 +12,7 @@
     },
     {
       "source": "/ce-static/:path*",
-      "destination": "https://ce-qa-azvasa.devstudi.com/tceplayer-two/:path*"
+      "destination": "https://ce-qa-azvasa.devstudi.com/ce-static/:path*"
     },
     {
       "source": "/tce-repo-api/:path*",
