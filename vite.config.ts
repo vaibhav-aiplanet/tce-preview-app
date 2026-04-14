@@ -18,6 +18,11 @@ export default defineConfig(({ mode }) => {
           secure: false,
           rewrite: (path: string) => path.replace(/^\/api/, "/api"),
         },
+        "/ce-static": {
+          target: env.VITE_TCE_API_BASE_URL,
+          changeOrigin: true,
+          secure: false,
+        },
         // TCE Player resources
         "/tceplayer-two": {
           target: env.VITE_TCE_API_BASE_URL,
