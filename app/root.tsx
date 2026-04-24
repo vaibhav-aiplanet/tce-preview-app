@@ -13,8 +13,9 @@ import "./app.css";
 import "~/lib/axios-interceptors";
 import { buildOgMeta } from "~/lib/og-meta";
 import { Provider } from "jotai";
+import { getStore } from "~/store";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 export async function loader({ request }: Route.LoaderArgs) {
     const origin = new URL(request.url).origin;
@@ -64,7 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
     return (
-        <Provider>
+        <Provider store={getStore()}>
             <QueryClientProvider client={queryClient}>
                 <Outlet />
             </QueryClientProvider>

@@ -24,8 +24,19 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const rows = await content_db
-    .select()
+    .select({
+      grade_id: tce_asset_mapping.grade_id,
+      subject_id: tce_asset_mapping.subject_id,
+      chapter_id: tce_asset_mapping.chapter_id,
+      subtopic_id: tce_asset_mapping.subtopic_id,
+      content_consumer: chapter_assets.content_consumer,
+      content_type: chapter_assets.content_type,
+    })
     .from(tce_asset_mapping)
+    .leftJoin(
+      chapter_assets,
+      eq(chapter_assets.id, tce_asset_mapping.chapter_asset_id),
+    )
     .where(eq(tce_asset_mapping.asset_id, assetId));
 
   const mapping = rows[0];
@@ -33,11 +44,32 @@ export async function loader({ request }: Route.LoaderArgs) {
     return Response.json(null);
   }
 
+  // tce_asset_mapping stores UUIDs (36 chars, dashed) but the master tables
+  // (grades/subjects/chapters/sub_topics) use char(32) ids without dashes.
+  // Normalize here so the client's ids match the lists in /_api/{grades,subjects,chapters,subtopics}.
+  const stripDashes = (v: string | null) => (v ? v.replace(/-/g, "") : v);
+
+  const mappedTo: "Teacher" | "Student" | undefined =
+    mapping.content_consumer === "STUDENT"
+      ? "Student"
+      : mapping.content_consumer === "TEACHER"
+        ? "Teacher"
+        : undefined;
+
+  const studentType: "Study" | "Revision" | undefined =
+    mapping.content_type === "REVISION"
+      ? "Revision"
+      : mapping.content_type === "STUDY"
+        ? "Study"
+        : undefined;
+
   return Response.json({
-    gradeId: mapping.grade_id,
-    subjectId: mapping.subject_id,
-    chapterId: mapping.chapter_id,
-    subtopicId: mapping.subtopic_id,
+    gradeId: stripDashes(mapping.grade_id),
+    subjectId: stripDashes(mapping.subject_id),
+    chapterId: stripDashes(mapping.chapter_id),
+    subtopicId: stripDashes(mapping.subtopic_id),
+    mappedTo,
+    studentType,
   });
 }
 

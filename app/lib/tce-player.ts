@@ -71,7 +71,6 @@ export async function fetchToken(): Promise<TokenData | undefined> {
     if (tokenData?.access_token) {
       document.cookie = `access_token=${tokenData.access_token}; path=/; SameSite=Lax`;
     }
-    console.log("token:", tokenData);
     return tokenData;
   } catch (error) {
     getErrorMessage(error);
@@ -89,15 +88,15 @@ export function getExpiryTime(
   const expiryTime = token.tstamp || 0 + parseInt(client.clientTimeout || "0");
 
   // Log the raw numeric expiryTime for debugging.
-  console.log("Calculated expiryTime (raw number):", expiryTime);
+  // console.log("Calculated expiryTime (raw number):", expiryTime);
 
   // Assuming expiryTime is a Unix timestamp in seconds.
   // Convert it to milliseconds for the Date constructor.
-  const expiryDate = new Date(expiryTime * 1000);
+  // const expiryDate = new Date(expiryTime * 1000);
 
   // Log the expiry time in a human-readable format.
   // toLocaleString() provides a locale-specific date and time format.
-  console.log("Expiry time (human readable):", expiryDate.toLocaleString("en"));
+  // console.log("Expiry time (human readable):", expiryDate.toLocaleString("en"));
 
   return expiryTime;
 }
