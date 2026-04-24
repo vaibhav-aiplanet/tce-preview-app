@@ -9,3 +9,15 @@ public/azvasa/manifest.json
 # React Router
 /.react-router/
 /build/
+
+# Logs
+*.log
+
+# Editor / AI tooling
+.claude/
+.cursorrules
+.windsurfrules
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+opencode.json
