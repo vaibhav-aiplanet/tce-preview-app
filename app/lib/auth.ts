@@ -3,7 +3,7 @@ import { env } from "./env";
 
 export const ALLOWED_ROLES = ["CONTENT_ADMIN", "CONTENT_REVIEWER"];
 
-function redirectToLogin() {
+export function redirectToLogin() {
   const params = new URLSearchParams();
   params.set("client", "TCE-TEST-APP");
   params.set("redirectUri", `${window.location.origin}/auth/callback`);
