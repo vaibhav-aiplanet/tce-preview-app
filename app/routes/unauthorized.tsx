@@ -1,14 +1,11 @@
-import { Button, Card, CardBody, CardHeader } from "@heroui/react";
-import { Link } from "react-router";
+import { Button, Card } from "@heroui/react";
 
 export default function Unauthorized() {
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-8 text-center">
-      <Card className="max-w-md">
-        <CardHeader className="flex flex-col gap-1 text-center text-2xl font-bold text-danger">
-          Access Denied
-        </CardHeader>
-        <CardBody className="flex flex-col items-center gap-3 text-center text-default-600">
+      <Card className="max-w-md p-6">
+        <h2 className="mb-4 text-center text-2xl font-bold text-danger">Access Denied</h2>
+        <div className="flex flex-col items-center gap-3 text-center text-default-600">
           <p>You do not have permission to access this application.</p>
           <p className="text-sm text-default-500">
             Required roles: CONTENT_ADMIN or CONTENT_REVIEWER
@@ -23,7 +20,7 @@ export default function Unauthorized() {
           >
             Logout and Try Another Account
           </Button>
-        </CardBody>
+        </div>
       </Card>
     </div>
   );
