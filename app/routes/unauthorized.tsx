@@ -12,7 +12,7 @@ export default function Unauthorized() {
           </p>
           <Button
             className="mt-2"
-            color="primary"
+            variant="solid"
             onPress={() => {
               sessionStorage.clear();
               window.location.href = "/";
