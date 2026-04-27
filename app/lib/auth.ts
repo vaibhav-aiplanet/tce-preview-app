@@ -1,7 +1,9 @@
 import axios from "axios";
 import { env } from "./env";
 
-export function redirectToLogin() {
+export const ALLOWED_ROLES = ["CONTENT_ADMIN", "CONTENT_REVIEWER"];
+
+function redirectToLogin() {
   const params = new URLSearchParams();
   params.set("client", "TCE-TEST-APP");
   params.set("redirectUri", `${window.location.origin}/auth/callback`);
@@ -24,6 +26,9 @@ async function validateToken(): Promise<TokenValidateResponse> {
     },
   );
   sessionStorage.setItem("profile", JSON.stringify(response.data.userInfo));
+  if (!ALLOWED_ROLES.includes(response.data.userInfo.role)) {
+    throw new Error("Unauthorized role");
+  }
   return response.data;
 }
 
