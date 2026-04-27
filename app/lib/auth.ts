@@ -12,7 +12,7 @@ function redirectToLogin() {
 
 export function logout() {
   sessionStorage.clear();
-  redirectToLogin();
+  window.location.href = "/unauthorized";
 }
 
 async function validateToken(): Promise<TokenValidateResponse> {
