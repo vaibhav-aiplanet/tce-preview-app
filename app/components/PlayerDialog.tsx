@@ -1,6 +1,7 @@
 import { Modal } from "@heroui/react";
 import TCEPlayer from "~/components/TCEPlayer";
 import CurriculumFilters from "~/components/CurriculumFilters";
+import { useUserRole } from "~/lib/auth";
 
 interface PlayerDialogProps {
   asset: TCEAsset;
@@ -17,6 +18,9 @@ export default function PlayerDialog({
   expiresIn,
   onClose,
 }: PlayerDialogProps) {
+  const role = useUserRole();
+  const mode = role === "CONTENT_REVIEWER" ? "reviewer" : "admin";
+
   return (
     <Modal.Backdrop
       isOpen={true}
@@ -39,6 +43,7 @@ export default function PlayerDialog({
               assetType: asset.assetType,
               subType: asset.subType,
             }}
+            mode={mode}
           />
           <Modal.Body className="flex-1 overflow-hidden p-0">
             <TCEPlayer

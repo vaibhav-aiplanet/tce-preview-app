@@ -6,4 +6,5 @@ export interface CurriculumFiltersProps {
         assetType: string;
         subType: string;
     };
+    mode: "admin" | "reviewer";
 }

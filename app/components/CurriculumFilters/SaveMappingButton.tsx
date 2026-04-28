@@ -1,4 +1,5 @@
 import { Button, Spinner } from "@heroui/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { saveMapping } from "~/lib/curriculum-api";
 import {
     useCurrentGrade,
@@ -28,6 +29,7 @@ export default function SaveMappingButton({ assetId, asset }: SaveMappingButtonP
     const [isMapped, setIsMapped] = useIsMapped();
     const [saving, setSaving] = useSaving();
     const [deleting] = useDeleting();
+    const qc = useQueryClient();
 
     const canSave =
         selectedSubject &&
@@ -57,6 +59,10 @@ export default function SaveMappingButton({ assetId, asset }: SaveMappingButtonP
                 studentType: (studentType as "Study" | "Revision") || undefined,
             });
             setIsMapped(true);
+            await Promise.all([
+                qc.invalidateQueries({ queryKey: ["mapping", assetId] }),
+                qc.invalidateQueries({ queryKey: ["mapped-assets"] }),
+            ]);
         } catch (error) {
             console.error(error);
             setIsMapped(false);
@@ -77,10 +83,10 @@ export default function SaveMappingButton({ assetId, asset }: SaveMappingButtonP
                 <>
                     {isPending && <Spinner color="current" size="sm" />}
                     {saving
-                        ? "Saving..."
+                        ? "Submitting..."
                         : isMapped
-                            ? "Update Mapping"
-                            : "Add Mapping"}
+                            ? "Resubmit for Review"
+                            : "Submit for Review"}
                 </>
             )}
         </Button>
