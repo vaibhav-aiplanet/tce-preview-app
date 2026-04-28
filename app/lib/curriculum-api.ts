@@ -3,6 +3,8 @@ export interface CurriculumItem {
   name: string;
 }
 
+export type MappingStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface AssetMapping {
   gradeId: string;
   subjectId: string;
@@ -15,6 +17,17 @@ export interface AssetMapping {
   subType?: string;
   mappedTo?: "Teacher" | "Student";
   studentType?: "Study" | "Revision";
+  status?: MappingStatus;
+  rejectionReason?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+}
+
+export class ReviewConflictError extends Error {
+  constructor() {
+    super("Submission is no longer pending");
+    this.name = "ReviewConflictError";
+  }
 }
 
 export async function fetchSubjects(
@@ -77,4 +90,24 @@ export async function deleteMapping(assetId: string): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId }),
   });
+}
+
+export async function reviewMapping(
+  assetId: string,
+  action: "approve" | "reject",
+  reviewedBy: string,
+  reason?: string,
+): Promise<void> {
+  const res = await fetch("/_api/mapping/review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assetId, action, reviewedBy, reason }),
+  });
+  if (res.status === 409) {
+    throw new ReviewConflictError();
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(data.error || `Review failed (${res.status})`);
+  }
 }

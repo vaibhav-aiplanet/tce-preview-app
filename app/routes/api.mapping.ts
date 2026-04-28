@@ -29,6 +29,10 @@ export async function loader({ request }: Route.LoaderArgs) {
       subject_id: tce_asset_mapping.subject_id,
       chapter_id: tce_asset_mapping.chapter_id,
       subtopic_id: tce_asset_mapping.subtopic_id,
+      status: tce_asset_mapping.status,
+      rejection_reason: tce_asset_mapping.rejection_reason,
+      reviewed_by: tce_asset_mapping.reviewed_by,
+      reviewed_at: tce_asset_mapping.reviewed_at,
       content_consumer: chapter_assets.content_consumer,
       content_type: chapter_assets.content_type,
     })
@@ -70,6 +74,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     subtopicId: stripDashes(mapping.subtopic_id),
     mappedTo,
     studentType,
+    status: mapping.status,
+    rejectionReason: mapping.rejection_reason,
+    reviewedBy: mapping.reviewed_by,
+    reviewedAt: mapping.reviewed_at,
   });
 }
 
@@ -142,8 +150,11 @@ export async function action({ request }: Route.ActionArgs) {
       .from(tce_asset_mapping)
       .where(eq(tce_asset_mapping.asset_id, assetId));
 
+    // chapter_assets.active is wired to mapping.status: a fresh submission is
+    // PENDING and not live until a reviewer approves it. Approval flips
+    // active=true via /_api/mapping/review.
     const chapterAssetValues = {
-      active: true,
+      active: false,
       deleted: false,
       asset_id: assetId,
       asset_mime_type: toEnumFormat(
@@ -182,6 +193,10 @@ export async function action({ request }: Route.ActionArgs) {
           chapter_id: chapterId,
           subtopic_id: subtopicIdValue,
           created_by: createdBy,
+          status: "PENDING",
+          rejection_reason: null,
+          reviewed_by: null,
+          reviewed_at: null,
         })
         .where(eq(tce_asset_mapping.asset_id, assetId));
     } else {
@@ -205,6 +220,10 @@ export async function action({ request }: Route.ActionArgs) {
             chapter_id: chapterId,
             subtopic_id: subtopicIdValue,
             created_by: createdBy,
+            status: "PENDING",
+            rejection_reason: null,
+            reviewed_by: null,
+            reviewed_at: null,
           })
           .where(eq(tce_asset_mapping.asset_id, assetId));
       } else {
@@ -216,6 +235,7 @@ export async function action({ request }: Route.ActionArgs) {
           chapter_id: chapterId,
           subtopic_id: subtopicIdValue,
           created_by: createdBy,
+          status: "PENDING",
         });
       }
     }

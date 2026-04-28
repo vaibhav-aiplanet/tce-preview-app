@@ -87,6 +87,10 @@ export async function loader() {
       contentType: ca?.content_type || null,
       createdBy: m.created_by,
       updatedAt: m.updated_at,
+      status: m.status,
+      rejectionReason: m.rejection_reason,
+      reviewedBy: m.reviewed_by,
+      reviewedAt: m.reviewed_at,
     };
   });
 

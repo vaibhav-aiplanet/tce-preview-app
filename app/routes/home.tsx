@@ -54,6 +54,12 @@ export function meta({ data }: Route.MetaArgs) {
 export async function clientLoader() {
   const userInfo = await ensureAuthenticated();
 
+  // Reviewers don't get the asset browser — send them straight to the queue.
+  if (userInfo.userInfo.role === "CONTENT_REVIEWER") {
+    window.location.replace("/mapped-assets");
+    return new Promise(() => {}) as never;
+  }
+
   // Prime the reference lists CurriculumFilters selects consume, so
   // PlayerDialog opens with Board/Grade/Subject populated instantly.
   await Promise.all([

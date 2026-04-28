@@ -13,7 +13,8 @@ import { chapter_assets } from "~/db/models/content/chapter-assets";
 import PlayerDialog from "~/components/PlayerDialog";
 import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
-import { redirectToLogin } from "~/lib/auth";
+import CurriculumFilters from "~/components/CurriculumFilters";
+import { redirectToLogin, useUserRole } from "~/lib/auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
 import NavBar from "~/components/NavBar";
 import { buildOgMeta } from "~/lib/og-meta";
@@ -100,6 +101,8 @@ export default function Asset() {
   const [searchParams] = useSearchParams();
   const { batchData } = useOutletContext<OutletContextType>();
   const [inputValue, setInputValue] = useState(paramAssetId || "");
+  const role = useUserRole();
+  const mode = role === "CONTENT_REVIEWER" ? "reviewer" : "admin";
 
   const fromGrid = location.state?.fromGrid === true;
   const gridAsset = batchData?.assets.find((a) => a.assetId === paramAssetId);
@@ -175,6 +178,19 @@ export default function Asset() {
           )}
         </span>
       </div>
+
+      {playerData && paramAssetId && (
+        <CurriculumFilters
+          assetId={paramAssetId}
+          asset={{
+            title: playerData.asset.title,
+            mimeType: playerData.asset.mimeType,
+            assetType: playerData.asset.assetType,
+            subType: playerData.asset.subType,
+          }}
+          mode={mode}
+        />
+      )}
 
       {/* Player area */}
       <div className="flex-1">
