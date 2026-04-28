@@ -12,7 +12,7 @@ export function redirectToLogin() {
 
 export function logout() {
   sessionStorage.clear();
-  window.location.href = "/unauthorized";
+  window.location.href = "/";
 }
 
 async function validateToken(): Promise<TokenValidateResponse> {
@@ -27,8 +27,9 @@ async function validateToken(): Promise<TokenValidateResponse> {
   );
   sessionStorage.setItem("profile", JSON.stringify(response.data.userInfo));
   if (!ALLOWED_ROLES.includes(response.data.userInfo.role)) {
-    throw new Error("Unauthorized role");
+    window.location.href = "/unauthorized";
   }
+
   return response.data;
 }
 
