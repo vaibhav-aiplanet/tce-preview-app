@@ -51,8 +51,7 @@ export default function AuthCallback() {
     sessionStorage.setItem("token", loaderData.accessToken);
     sessionStorage.setItem("refreshToken", loaderData.refreshToken);
     sessionStorage.setItem("profile", JSON.stringify(loaderData.userInfo));
-    const landing =
-      loaderData.userInfo.role === "CONTENT_REVIEWER" ? "/mapped-assets" : "/";
+    const landing = "/";
     navigate(landing);
   }, [loaderData, error, navigate]);
 

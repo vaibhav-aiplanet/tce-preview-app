@@ -21,14 +21,14 @@ export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
             className="cursor-pointer overflow-hidden p-0 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]"
             variant="default"
           >
-            <button type="button" onClick={() => onSelect(asset)} className="w-full text-left">
+            <button
+              type="button"
+              onClick={() => onSelect(asset)}
+              className="w-full text-left cursor-pointer"
+            >
               <div className="relative aspect-video bg-black/90 overflow-hidden">
                 {thumb ? (
-                  <img
-                    src={thumb}
-                    alt={asset.title}
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={thumb} alt={asset.title} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-muted/10">
                     <svg
@@ -50,16 +50,11 @@ export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
                 )}
               </div>
               <div className="flex flex-col gap-1.5 p-3 pt-2.5">
-                <p
-                  className="truncate text-sm font-medium text-foreground"
-                  title={asset.title}
-                >
+                <p className="truncate text-sm font-medium text-foreground" title={asset.title}>
                   {asset.title || "Untitled"}
                 </p>
                 {(asset.subType || asset.mimeType) && (
-                  <Chip className="w-fit text-xs">
-                    {asset.subType || asset.mimeType}
-                  </Chip>
+                  <Chip className="w-fit text-xs">{asset.subType || asset.mimeType}</Chip>
                 )}
               </div>
             </button>

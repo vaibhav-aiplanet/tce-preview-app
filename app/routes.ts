@@ -16,6 +16,7 @@ export default [
   route("_api/og-image", "routes/api.og-image.tsx"),
 
   route("_api/mapped-assets", "routes/api.mapped-assets.ts"),
+  route("_api/mapped-assets/counts", "routes/api.mapped-assets.counts.ts"),
 
   route("auth/callback", "routes/auth.callback.tsx"),
   route("unauthorized", "routes/unauthorized.tsx"),

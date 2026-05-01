@@ -6,6 +6,7 @@ import {
   useLocation,
   useMatches,
   useSearchParams,
+  useLoaderData,
 } from "react-router";
 import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
 import {
@@ -18,6 +19,7 @@ import { useBatchAssetData } from "~/lib/tce-queries";
 import AssetGrid from "~/components/AssetGrid";
 import AssetGridSkeleton from "~/components/AssetGridSkeleton";
 import NavBar from "~/components/NavBar";
+import ReviewerHome from "~/components/ReviewerHome";
 import { buildOgMeta } from "~/lib/og-meta";
 import { queryClient } from "~/root";
 import {
@@ -53,12 +55,6 @@ export function meta({ data }: Route.MetaArgs) {
 
 export async function clientLoader() {
   const userInfo = await ensureAuthenticated();
-
-  // Reviewers don't get the asset browser — send them straight to the queue.
-  if (userInfo.userInfo.role === "CONTENT_REVIEWER") {
-    window.location.replace("/mapped-assets");
-    return new Promise(() => {}) as never;
-  }
 
   // Prime the reference lists CurriculumFilters selects consume, so
   // PlayerDialog opens with Board/Grade/Subject populated instantly.
@@ -136,6 +132,8 @@ export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const userInfo = useLoaderData<typeof clientLoader>();
+  const isReviewer = userInfo?.userInfo?.role === "CONTENT_REVIEWER";
   const [batchAssetIds, setBatchAssetIds] = useState<string[]>([]);
   const [fileLoading, setFileLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -251,6 +249,15 @@ export default function Home() {
 
   const showIdleState =
     !batchData && !isBatchLoading && batchAssetIds.length === 0;
+
+  if (isReviewer) {
+    return (
+      <div className="flex h-screen flex-col bg-background">
+        <NavBar />
+        <ReviewerHome />
+      </div>
+    );
+  }
 
   const goToPage = (p: number) => {
     setPage(p);

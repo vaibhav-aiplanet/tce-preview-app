@@ -1,5 +1,6 @@
 import { Button, Chip } from "@heroui/react";
-import { Link, useNavigate } from "react-router";
+import { useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import { logout, useUserRole } from "~/lib/auth";
 
 export default function NavBar() {
@@ -13,21 +14,21 @@ export default function NavBar() {
       ? "Content Admin"
       : null;
 
-  const homePath = isReviewer ? "/mapped-assets" : "/";
+  const location = useLocation();
+
+  const isMappedAssetsRoute = useMemo(() => location.pathname === "/mapped-assets", [location]);
+  const isHomeRoute = useMemo(() => location.pathname === "/", [location]);
 
   return (
     <nav className="flex items-center gap-3 border-b border-border/40 bg-background/80 px-5 py-2.5 backdrop-blur-sm">
-      <Link
-        to={homePath}
-        className="text-base font-semibold tracking-tight text-foreground no-underline"
-      >
+      <Link to="/" className="text-base font-semibold tracking-tight text-foreground no-underline">
         TCE Preview
       </Link>
       {roleLabel && (
         <Chip
           color={isReviewer ? "accent" : "default"}
           variant="soft"
-          size="sm"
+          size="md"
           className="text-xs"
         >
           {roleLabel}
@@ -35,12 +36,20 @@ export default function NavBar() {
       )}
 
       <div className="ml-auto flex items-center gap-3">
-        {!isReviewer && (
-          <Button variant="ghost" size="sm" onPress={() => navigate("/")}>
-            Home
-          </Button>
-        )}
-        <Button variant="ghost" size="sm" onPress={() => navigate("/mapped-assets")}>
+        <Button
+          className={isHomeRoute ? "underline underline-offset-8 decoration-2" : ""}
+          variant="ghost"
+          size="sm"
+          onPress={() => navigate("/")}
+        >
+          Home
+        </Button>
+        <Button
+          className={isMappedAssetsRoute ? "underline underline-offset-8 decoration-2" : ""}
+          variant="ghost"
+          size="sm"
+          onPress={() => navigate("/mapped-assets")}
+        >
           {queueLabel}
         </Button>
         <Button variant="ghost" size="sm" onPress={logout}>
