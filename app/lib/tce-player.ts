@@ -13,7 +13,8 @@ const getErrorMessage = (error: any) => {
 
 function setCookiesInBrowser(cookies: Record<string, CookieConfig>) {
   for (const [key, config] of Object.entries(cookies)) {
-    let cookieStr = `${key}=${config.value}; path=/; max-age=${config.max_age}; samesite=${config.samesite}`;
+    const path = config.path || "/";
+    let cookieStr = `${key}=${config.value}; path=${path}; max-age=${config.max_age}; samesite=${config.samesite}`;
 
     if (config.secure) {
       cookieStr += "; secure";
@@ -69,7 +70,7 @@ export async function fetchToken(): Promise<TokenData | undefined> {
 
     const tokenData = response.data.data;
     if (tokenData?.access_token) {
-      document.cookie = `access_token=${tokenData.access_token}; path=/; SameSite=Lax`;
+      document.cookie = `access_token=${tokenData.access_token}; path=/tce-repo-api/1/web/1/content/fileservice; SameSite=Lax`;
     }
     return tokenData;
   } catch (error) {
@@ -77,10 +78,7 @@ export async function fetchToken(): Promise<TokenData | undefined> {
   }
 }
 
-export function getExpiryTime(
-  token: TokenData | undefined,
-  client: ClientId | undefined,
-) {
+export function getExpiryTime(token: TokenData | undefined, client: ClientId | undefined) {
   if (typeof token === "undefined" || typeof client === "undefined") {
     throw "TCE didn't authorize this client";
   }
@@ -107,16 +105,12 @@ export async function fetchTCEAssetDetails(ids: string[], accessToken: string) {
     params.append("ids", ids.join(","));
     params.append("accessToken", accessToken);
 
-    const response = await axios.post(
-      `${env.api_url}/v1/api/user/tceplayer/assets`,
-      params,
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        withCredentials: true,
+    const response = await axios.post(`${env.api_url}/v1/api/user/tceplayer/assets`, params, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-    );
+      withCredentials: true,
+    });
 
     const assetData = response.data.data;
     const raw = assetData.playlistJson;
@@ -139,16 +133,12 @@ export async function fetchMultipleTCEAssetDetails(
     params.append("ids", ids.join(","));
     params.append("accessToken", accessToken);
 
-    const response = await axios.post(
-      `${env.api_url}/v1/api/user/tceplayer/assets`,
-      params,
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        withCredentials: true,
+    const response = await axios.post(`${env.api_url}/v1/api/user/tceplayer/assets`, params, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-    );
+      withCredentials: true,
+    });
 
     const assetData = response.data.data;
     const raw = assetData.playlistJson;

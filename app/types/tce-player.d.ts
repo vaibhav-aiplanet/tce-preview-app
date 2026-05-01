@@ -5,6 +5,7 @@ interface CookieConfig {
   httponly: boolean;
   secure: boolean;
   value: string;
+  path?: string;
 }
 
 interface ClientId {
