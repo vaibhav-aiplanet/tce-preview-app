@@ -1,4 +1,5 @@
 import { Card, Chip } from "@heroui/react";
+import { useEffect, useRef } from "react";
 
 interface AssetGridProps {
   assets: TCEAsset[];
@@ -10,11 +11,45 @@ function getThumbnailUrl(asset: TCEAsset) {
   return `/tce-repo-api/1/web/1/content/fileservice/${asset.encryptedFilePath}/${asset.assetId}/${asset.thumbFileName}`;
 }
 
+function getAssetUrl(asset: TCEAsset) {
+  if (!asset.encryptedFilePath || !asset.fileName) return null;
+  return `/tce-repo-api/1/web/1/content/fileservice/${asset.encryptedFilePath}/${asset.assetId}/${asset.fileName}`;
+}
+
+function isSwf(asset: TCEAsset) {
+  return (
+    asset.mimeType === "application/x-shockwave-flash" ||
+    asset.fileName?.endsWith(".swf") ||
+    asset.subType === "swf"
+  );
+}
+
+function SwfPlayer({ src }: { src: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const ruffle = (await import("@ruffle-rs/ruffle")).default;
+      if (cancelled) return;
+      const player = await ruffle.createPlayer();
+      if (cancelled) return;
+      containerRef.current?.appendChild(player);
+      player.load({ url: src });
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [src]);
+
+  return <div ref={containerRef} className="h-full w-full" />;
+}
+
 export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5 p-6 pt-2">
       {assets.map((asset) => {
         const thumb = getThumbnailUrl(asset);
+        const assetUrl = getAssetUrl(asset);
         return (
           <Card
             key={asset.assetId}
@@ -26,8 +61,10 @@ export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
               onClick={() => onSelect(asset)}
               className="w-full text-left cursor-pointer"
             >
-              <div className="relative aspect-video bg-black/90 overflow-hidden">
-                {thumb ? (
+                <div className="relative aspect-video bg-black/90 overflow-hidden">
+                {isSwf(asset) && assetUrl ? (
+                  <SwfPlayer src={assetUrl} />
+                ) : thumb ? (
                   <img src={thumb} alt={asset.title} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-muted/10">
