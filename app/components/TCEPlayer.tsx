@@ -139,6 +139,7 @@ const TCEPlayer = ({
 
       const configData = {
         detail: {
+          allowInteractions: false,
           tcePlayerId: playerId,
           resourceData: assetRef.current,
           iFrameCss: {
