@@ -9,6 +9,11 @@ const privateSchema = z
     MASTER_DB: z.string().optional(),
     USERS_DB: z.string().optional(),
     CONTENT_DB: z.string().optional(),
+
+    AWS_REGION: z.string().optional(),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    S3_BUCKET: z.string().optional(),
   })
   .transform((e) => {
     const db_host = e.DB_HOSTNAME;
@@ -26,6 +31,10 @@ const privateSchema = z
       master_db_url: db_url_builder(e.MASTER_DB ?? ""),
       users_db_url: db_url_builder(e.USERS_DB ?? ""),
       content_db_url: db_url_builder(e.CONTENT_DB ?? ""),
+      aws_region: e.AWS_REGION ?? "",
+      aws_access_key_id: e.AWS_ACCESS_KEY_ID ?? "",
+      aws_secret_access_key: e.AWS_SECRET_ACCESS_KEY ?? "",
+      s3_bucket: e.S3_BUCKET ?? "",
     };
   });
 
@@ -56,6 +65,10 @@ const getProcessEnv = () => {
     MASTER_DB: "",
     CONTENT_DB: "",
     USERS_DB: "",
+    AWS_REGION: "",
+    AWS_ACCESS_KEY_ID: "",
+    AWS_SECRET_ACCESS_KEY: "",
+    S3_BUCKET: "",
   };
 };
 

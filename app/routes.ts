@@ -18,9 +18,15 @@ export default [
   route("_api/mapped-assets", "routes/api.mapped-assets.ts"),
   route("_api/mapped-assets/counts", "routes/api.mapped-assets.counts.ts"),
 
+  route("_api/content-files", "routes/api.content-files.ts"),
+  route("_api/content-files/upload", "routes/api.content-files.upload.ts"),
+  route("_api/content-files/:id", "routes/api.content-files.$id.ts"),
+  route("_api/content-files/:id/json", "routes/api.content-files.$id.json.ts"),
+
   route("auth/callback", "routes/auth.callback.tsx"),
   route("unauthorized", "routes/unauthorized.tsx"),
   route("mapped-assets", "routes/mapped-assets.tsx"),
+  route("content-upload", "routes/content-upload.tsx"),
   layout("routes/home.tsx", [
     index("routes/home-index.tsx"),
     route(":assetId", "routes/asset.tsx"),

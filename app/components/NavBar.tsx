@@ -18,6 +18,8 @@ export default function NavBar() {
 
   const isMappedAssetsRoute = useMemo(() => location.pathname === "/mapped-assets", [location]);
   const isHomeRoute = useMemo(() => location.pathname === "/", [location]);
+  const isUploadRoute = useMemo(() => location.pathname === "/content-upload", [location]);
+  const isAdmin = role === "CONTENT_ADMIN";
 
   return (
     <nav className="flex items-center gap-3 border-b border-border/40 bg-background/80 px-5 py-2.5 backdrop-blur-sm">
@@ -52,6 +54,16 @@ export default function NavBar() {
         >
           {queueLabel}
         </Button>
+        {isAdmin && (
+          <Button
+            className={isUploadRoute ? "underline underline-offset-8 decoration-2" : ""}
+            variant="ghost"
+            size="sm"
+            onPress={() => navigate("/content-upload")}
+          >
+            Upload Content
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onPress={logout}>
           Logout
         </Button>

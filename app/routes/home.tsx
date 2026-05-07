@@ -36,7 +36,7 @@ import {
 
 const PAGE_SIZE = 18;
 
-type Manifest = Record<string, { name: string; path: string }[]>;
+type Manifest = Record<string, { id?: string; name: string; path: string }[]>;
 
 export async function loader({ request }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
@@ -150,7 +150,7 @@ export default function Home() {
   const { data: manifest, isLoading: loadingFilters } = useQuery<Manifest>({
     queryKey: ["manifest"],
     queryFn: () =>
-      fetch("/azvasa/manifest.json").then((r) => {
+      fetch("/_api/content-files").then((r) => {
         if (!r.ok) throw new Error("Failed to load manifest");
         return r.json() as Promise<Manifest>;
       }),
