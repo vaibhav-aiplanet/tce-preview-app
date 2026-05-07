@@ -1,23 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Plugin } from "vite";
-import { read, utils } from "xlsx";
-
-function parseAssetIdsFromBuffer(buffer: Buffer): string[] {
-  const workbook = read(buffer, { type: "buffer" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = utils.sheet_to_json<string[]>(sheet, { header: 1 });
-
-  const dataRows = rows.slice(5);
-  const assetIds: string[] = [];
-  for (const row of dataRows) {
-    const value = row[1];
-    if (typeof value === "string" && value.trim()) {
-      assetIds.push(value.trim());
-    }
-  }
-  return assetIds;
-}
+import {
+  buildDisplayName,
+  deriveBookMetadataFromFilename,
+  parseAssetIdsFromBuffer,
+} from "../app/lib/excel-parser";
 
 export function excelToJsonPlugin(): Plugin {
   function generateJsonFiles() {
@@ -36,11 +24,11 @@ export function excelToJsonPlugin(): Plugin {
       for (const file of files) {
         if (!/\.xls$/i.test(file) && !/\.xlsx$/i.test(file)) continue;
 
-        const [subject_name, subtopic_name] = file.split('-').slice(0, 2)
+        const { subject_name, subtopic_name } = deriveBookMetadataFromFilename(file);
 
         const excelPath = path.join(gradeDir, file);
-        const jsonName = file.replace(/\.xlsx?$/i, ".json").replace(' ', ';');
-        const jsonPath = path.join(gradeDir, jsonName)
+        const jsonName = file.replace(/\.xlsx?$/i, ".json").replace(" ", ";");
+        const jsonPath = path.join(gradeDir, jsonName);
 
         if (fs.existsSync(jsonPath)) {
           skipped++;
@@ -52,10 +40,10 @@ export function excelToJsonPlugin(): Plugin {
           const assetIds = parseAssetIdsFromBuffer(buffer);
 
           const json_data = {
-            subject_name: subject_name.replace(';', ' '),
+            subject_name,
             assetIds,
-            subtopic_name: subtopic_name === "NA" ? null : subtopic_name
-          }
+            subtopic_name,
+          };
 
           fs.writeFileSync(jsonPath, JSON.stringify(json_data, null, 2));
           generated++;
@@ -84,15 +72,13 @@ export function excelToJsonPlugin(): Plugin {
 
       if (jsonFiles.length > 0) {
         manifest[entry.name] = jsonFiles.map((f) => {
-          const[subject, subtopic] = f.split('-').slice(0, 2)
-          let name = subject;
-          if (subtopic !== "NA") {
-            name = `${name} - ${subtopic}`
-          }
-        return {
-          name,
-          path: `/azvasa/${entry.name}/${f}`,
-        }
+          const { subject_name, subtopic_name } = deriveBookMetadataFromFilename(
+            f.replace(/\.json$/i, ".xlsx"),
+          );
+          return {
+            name: buildDisplayName(subject_name, subtopic_name),
+            path: `/azvasa/${entry.name}/${f}`,
+          };
         });
       }
     }

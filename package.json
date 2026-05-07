@@ -9,6 +9,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1043.0",
     "@heroui/react": "^3.0.3",
     "@heroui/styles": "^3.0.3",
     "@react-router/node": "7.12.0",
