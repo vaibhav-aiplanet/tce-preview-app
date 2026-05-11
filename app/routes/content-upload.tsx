@@ -28,6 +28,7 @@ type UploadResult = {
 };
 
 type StagedFile = {
+  id: string;
   file: File;
   subject_name: string;
   subtopic_name: string | null;
@@ -38,6 +39,7 @@ type StagedFile = {
 function stageFile(file: File): StagedFile {
   const { subject_name, subtopic_name } = deriveBookMetadataFromFilename(file.name);
   return {
+    id: crypto.randomUUID(),
     file,
     subject_name,
     subtopic_name,
@@ -78,8 +80,8 @@ export default function ContentUpload() {
     multiple: true,
   });
 
-  const removeStaged = (idx: number) =>
-    setStaged((prev) => prev.filter((_, i) => i !== idx));
+  const removeStaged = (id: string) =>
+    setStaged((prev) => prev.filter((s) => s.id !== id));
 
   const { data: gradesList = [], isLoading: gradesLoading } = useQuery<CurriculumItem[]>({
     queryKey: ["grades"],
@@ -131,7 +133,7 @@ export default function ContentUpload() {
       // Drop successfully uploaded files from the staged list; keep failures so the
       // user can see what went wrong and retry.
       const failed = new Set(
-        data.uploaded.filter((r) => !r.ok).map((r) => r.filename),
+        data.uploaded.flatMap((r) => (!r.ok ? [r.filename] : [])),
       );
       setStaged((prev) => prev.filter((s) => failed.has(s.file.name)));
       qc.invalidateQueries({ queryKey: ["content-files-manifest"] });
@@ -215,7 +217,7 @@ export default function ContentUpload() {
               : "Drag and drop .xlsx files here, or click to browse."}
           </p>
           <p className="mt-1 text-xs text-muted">
-            Accepts .xlsx and .xls — multiple files supported.
+            Accepts .xlsx and .xls (multiple files supported).
           </p>
         </div>
 
@@ -225,9 +227,9 @@ export default function ContentUpload() {
               Staged files ({staged.length})
             </h2>
             <ul className="mt-3 divide-y divide-border/50 rounded-md border border-border/50">
-              {staged.map((s, i) => (
+              {staged.map((s) => (
                 <li
-                  key={`${s.file.name}-${i}`}
+                  key={s.id}
                   className="flex items-center justify-between gap-3 px-4 py-2"
                 >
                   <div className="min-w-0 flex-1">
@@ -249,7 +251,7 @@ export default function ContentUpload() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onPress={() => removeStaged(i)}
+                    onPress={() => removeStaged(s.id)}
                   >
                     Remove
                   </Button>
@@ -284,7 +286,7 @@ export default function ContentUpload() {
             </h2>
             <ul className="mt-3 divide-y divide-border/50 rounded-md border border-border/50">
               {results.map((r, i) => (
-                <li key={`${r.filename}-${i}`} className="px-4 py-2 text-sm">
+                <li key={r.id ?? `${r.filename}-${i}`} className="px-4 py-2 text-sm">
                   <span
                     className={
                       r.ok ? "text-success font-medium" : "text-danger font-medium"
@@ -294,10 +296,10 @@ export default function ContentUpload() {
                   </span>{" "}
                   <span className="font-medium">{r.filename}</span>
                   {r.ok && (
-                    <span className="text-muted"> — {r.asset_count} asset(s)</span>
+                    <span className="text-muted">: {r.asset_count} asset(s)</span>
                   )}
                   {!r.ok && r.error && (
-                    <span className="text-danger"> — {r.error}</span>
+                    <span className="text-danger">: {r.error}</span>
                   )}
                 </li>
               ))}

@@ -37,7 +37,7 @@ export default function AssetGrid({ assets, onSelect }: AssetGridProps) {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth={1.5}
-                      className="h-8 w-8 text-muted/50"
+                      className="size-8 text-muted/50"
                     >
                       <path
                         strokeLinecap="round"

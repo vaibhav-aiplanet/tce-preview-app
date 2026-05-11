@@ -68,7 +68,7 @@ export default function AuthCallback() {
       </span>
       <div className="flex items-center gap-2 text-sm text-muted">
         <Spinner size="sm" />
-        Logging you in...
+        Logging you in…
       </div>
     </div>
   );

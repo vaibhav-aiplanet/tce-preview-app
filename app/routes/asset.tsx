@@ -120,7 +120,7 @@ export default function Asset() {
           {isLoading ? (
             <span className="flex items-center gap-2">
               <Spinner size="sm" />
-              Loading...
+              Loading…
             </span>
           ) : error ? (
             <span className="flex items-center gap-2 text-danger">

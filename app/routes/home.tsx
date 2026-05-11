@@ -304,7 +304,7 @@ export default function Home() {
         {loadingFilters && (
           <div className="flex items-center gap-2 text-sm text-muted">
             <Spinner size="sm" />
-            Loading filters...
+            Loading filters…
           </div>
         )}
 
@@ -361,7 +361,7 @@ export default function Home() {
               {fileLoading && (
                 <div className="flex items-center gap-2 text-sm text-muted">
                   <Spinner size="sm" />
-                  Loading...
+                  Loading…
                 </div>
               )}
             </div>
@@ -396,7 +396,7 @@ export default function Home() {
         {isBatchLoading && (
           <div className="flex items-center gap-2 text-sm text-muted">
             <Spinner size="sm" />
-            Loading assets...
+            Loading assets…
           </div>
         )}
         {batchError && (

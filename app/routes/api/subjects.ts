@@ -30,7 +30,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       ),
     );
 
-  const subjectIds = mappings.map((m) => m.subjectId).filter(Boolean);
+  const subjectIds = mappings.flatMap((m) => (m.subjectId ? [m.subjectId] : []));
 
   if (subjectIds.length === 0) {
     return Response.json([]);

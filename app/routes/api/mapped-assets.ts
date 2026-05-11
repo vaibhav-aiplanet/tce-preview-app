@@ -21,10 +21,10 @@ export async function loader() {
   const stripHyphens = (id: string) => id.replace(/-/g, "");
 
   // Collect unique IDs for batch lookups (stripped for master DB queries)
-  const gradeIds = [...new Set(mappings.map((m) => m.grade_id).filter(Boolean))].map((id) => stripHyphens(id!));
-  const subjectIds = [...new Set(mappings.map((m) => m.subject_id).filter(Boolean))].map((id) => stripHyphens(id!));
-  const chapterIds = [...new Set(mappings.map((m) => m.chapter_id).filter(Boolean))].map((id) => stripHyphens(id!));
-  const subtopicIds = [...new Set(mappings.map((m) => m.subtopic_id).filter(Boolean))].map((id) => stripHyphens(id!));
+  const gradeIds = [...new Set(mappings.flatMap((m) => (m.grade_id ? [stripHyphens(m.grade_id)] : [])))];
+  const subjectIds = [...new Set(mappings.flatMap((m) => (m.subject_id ? [stripHyphens(m.subject_id)] : [])))];
+  const chapterIds = [...new Set(mappings.flatMap((m) => (m.chapter_id ? [stripHyphens(m.chapter_id)] : [])))];
+  const subtopicIds = [...new Set(mappings.flatMap((m) => (m.subtopic_id ? [stripHyphens(m.subtopic_id)] : [])))];
   const assetIds = mappings.map((m) => m.asset_id);
 
   // Batch fetch names from master DB

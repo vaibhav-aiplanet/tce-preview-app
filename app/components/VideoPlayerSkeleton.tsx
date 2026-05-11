@@ -17,13 +17,13 @@ export default function VideoPlayerSkeleton({
 
       {/* Play button placeholder */}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-        <div className="h-14 w-14 rounded-full bg-white/10" />
+        <div className="size-14 rounded-full bg-white/10" />
         <div className="h-3 w-28 rounded-md bg-white/8" />
       </div>
 
       {/* Controls bar placeholder */}
       <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2.5 bg-white/5 px-3 py-2">
-        <div className="h-6 w-6 rounded bg-white/10" />
+        <div className="size-6 rounded bg-white/10" />
         <div className="h-1 flex-1 rounded-full bg-white/10" />
         <div className="h-3 w-12 rounded-md bg-white/8" />
       </div>
