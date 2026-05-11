@@ -7,6 +7,7 @@ import {
   reviewMapping,
   type AssetMapping,
 } from "~/lib/curriculum-api";
+import { useUser } from "~/lib/auth";
 
 interface ReviewActionsProps {
   assetId: string;
@@ -26,8 +27,8 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
   const isPending = mapping?.status === "PENDING";
   const canReview = !!mapping && isPending && !submitting;
 
-  const profile = JSON.parse(sessionStorage.getItem("profile") || "{}");
-  const reviewedBy = profile.userName || profile.user_name || "";
+  const user = useUser();
+  const reviewedBy = user?.userName ?? "";
 
   const afterReview = async () => {
     await Promise.all([

@@ -31,7 +31,6 @@ export async function fetchClientId(): Promise<ClientId | undefined> {
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
         },
         withCredentials: true,
       },

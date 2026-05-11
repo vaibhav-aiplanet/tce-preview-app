@@ -5,21 +5,18 @@ import { Button, Input, Modal, Select, ListBox, Spinner, TextArea } from "@herou
 import NavBar from "~/components/NavBar";
 import PlayerDialog from "~/components/PlayerDialog";
 import StatusBadge from "~/components/StatusBadge";
-import { ensureAuthenticated, useUserRole } from "~/lib/auth";
+import { useUser, useUserRole } from "~/lib/auth";
+import { requireAuthedLoader } from "~/lib/server-auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
 import {
   ReviewConflictError,
   reviewMapping,
   type MappingStatus,
 } from "~/lib/curriculum-api";
+import type { Route } from "./+types/mapped-assets";
 
-export async function clientLoader() {
-  await ensureAuthenticated();
-  return null;
-}
-clientLoader.hydrate = true as const;
-
-export function HydrateFallback() {
+export async function loader({ request }: Route.LoaderArgs) {
+  await requireAuthedLoader(request);
   return null;
 }
 
@@ -181,8 +178,8 @@ export default function MappedAssetsPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  const profile = JSON.parse(sessionStorage.getItem("profile") || "{}");
-  const reviewedBy = profile.userName || profile.user_name || "";
+  const user = useUser();
+  const reviewedBy = user?.userName ?? "";
 
   const refreshAfterReview = async () => {
     await qc.invalidateQueries({ queryKey: ["mapped-assets"] });
