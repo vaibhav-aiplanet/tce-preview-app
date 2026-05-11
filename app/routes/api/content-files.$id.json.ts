@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { content_db } from "~/db";
 import { content_files } from "~/db/models/content/content-files";
 import { getJson } from "~/lib/s3";
-import type { Route } from "./+types/api.content-files.$id.json";
+import type { Route } from "./+types/content-files.$id.json";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const id = params.id;

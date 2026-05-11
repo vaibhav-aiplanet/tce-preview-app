@@ -1,5 +1,5 @@
 import { ImageResponse } from "@vercel/og";
-import type { Route } from "./+types/api.og-image";
+import type { Route } from "./+types/og-image";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);

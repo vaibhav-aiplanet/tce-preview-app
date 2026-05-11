@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { content_db, master_db } from "~/db";
 import { content_files } from "~/db/models/content/content-files";
 import { grades } from "~/db/models/master/grades";
-import type { Route } from "./+types/api.content-files";
+import type { Route } from "./+types/content-files";
 
 export type ContentFilesManifestEntry = {
   id: string;

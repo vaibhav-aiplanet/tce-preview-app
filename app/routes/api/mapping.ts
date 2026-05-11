@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { content_db } from "~/db";
 import { tce_asset_mapping } from "~/db/models/content/tce-asset-mapping";
 import { chapter_assets } from "~/db/models/content/chapter-assets";
-import type { Route } from "./+types/api.mapping";
+import type { Route } from "./+types/mapping";
 
 function generateId(): string {
   return Array.from({ length: 32 }, () =>

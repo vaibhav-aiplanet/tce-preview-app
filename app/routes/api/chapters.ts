@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { master_db } from "~/db";
 import { chapters } from "~/db/models/master/chapters";
-import type { Route } from "./+types/api.chapters";
+import type { Route } from "./+types/chapters";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);

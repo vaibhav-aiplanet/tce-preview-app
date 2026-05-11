@@ -11,7 +11,7 @@ import {
   authErrorResponse,
   requireContentAdmin,
 } from "~/lib/server-auth";
-import type { Route } from "./+types/api.content-files.upload";
+import type { Route } from "./+types/content-files.upload";
 
 type UploadResult = {
   filename: string;

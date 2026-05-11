@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { master_db } from "~/db";
 import { subject_mapping } from "~/db/models/master/subject-mapping";
 import { subjects } from "~/db/models/master/subjects";
-import type { Route } from "./+types/api.subjects";
+import type { Route } from "./+types/subjects";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
