@@ -4,21 +4,18 @@ import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Label, ListBox, Select, Spinner } from "@heroui/react";
 import NavBar from "~/components/NavBar";
-import { ensureAuthenticated, getUserRole } from "~/lib/auth";
+import { useUser } from "~/lib/auth";
+import { requireAuthedLoader } from "~/lib/server-auth";
 import type { CurriculumItem } from "~/lib/curriculum-api";
 import {
   buildDisplayName,
   deriveBookMetadataFromFilename,
 } from "~/lib/excel-parser";
 import type { ContentFilesManifest } from "./api.content-files";
+import type { Route } from "./+types/content-upload";
 
-export async function clientLoader() {
-  const userInfo = await ensureAuthenticated();
-  return userInfo;
-}
-clientLoader.hydrate = true as const;
-
-export function HydrateFallback() {
+export async function loader({ request }: Route.LoaderArgs) {
+  await requireAuthedLoader(request);
   return null;
 }
 
@@ -56,16 +53,17 @@ function gradeKey(name: string): string {
 export default function ContentUpload() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const user = useUser();
   const [selectedGradeId, setSelectedGradeId] = useState<string>("");
   const [staged, setStaged] = useState<StagedFile[]>([]);
   const [results, setResults] = useState<UploadResult[]>([]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (getUserRole() !== "CONTENT_ADMIN") {
+    if (!user) return;
+    if (user.role !== "CONTENT_ADMIN") {
       navigate("/unauthorized", { replace: true });
     }
-  }, [navigate]);
+  }, [user, navigate]);
 
   const onDrop = useCallback((accepted: File[]) => {
     setStaged((prev) => [...prev, ...accepted.map(stageFile)]);
@@ -113,7 +111,6 @@ export default function ContentUpload() {
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
-      const token = sessionStorage.getItem("token") ?? "";
       const fd = new FormData();
       fd.append("gradeId", selectedGradeId);
       for (const s of staged) {
@@ -121,7 +118,6 @@ export default function ContentUpload() {
       }
       const resp = await fetch("/_api/content-files/upload", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
         body: fd,
       });
       if (!resp.ok) {
@@ -145,10 +141,8 @@ export default function ContentUpload() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const token = sessionStorage.getItem("token") ?? "";
       const resp = await fetch(`/_api/content-files/${id}`, {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (!resp.ok) {
         const text = await resp.text();

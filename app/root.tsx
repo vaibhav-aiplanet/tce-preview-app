@@ -10,16 +10,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import type { Route } from "./+types/root";
 import "./app.css";
-import "~/lib/axios-interceptors";
 import { buildOgMeta } from "~/lib/og-meta";
 import { Provider } from "jotai";
 import { getStore } from "~/store";
+import { requireUser, type AuthedUser } from "~/lib/server-auth";
 
 export const queryClient = new QueryClient();
 
 export async function loader({ request }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
-  return Response.json({ origin });
+  let user: AuthedUser | null = null;
+  try {
+    user = await requireUser(request);
+  } catch {
+    user = null;
+  }
+  return Response.json({ origin, user });
 }
 
 export const meta: Route.MetaFunction = ({ data }) => {

@@ -14,7 +14,8 @@ import PlayerDialog from "~/components/PlayerDialog";
 import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
 import CurriculumFilters from "~/components/CurriculumFilters";
-import { redirectToLogin, useUserRole } from "~/lib/auth";
+import { useUserRole } from "~/lib/auth";
+import { requireAuthedLoader } from "~/lib/server-auth";
 import { useTCEPlayerData } from "~/lib/tce-queries";
 import NavBar from "~/components/NavBar";
 import { buildOgMeta } from "~/lib/og-meta";
@@ -30,6 +31,7 @@ interface OutletContextType {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
+  await requireAuthedLoader(request);
   const assetId = params.assetId;
   if (!assetId) return Response.json(null);
 
@@ -85,13 +87,6 @@ export function meta({ data, params }: Route.MetaArgs) {
     image: ogImage,
     type: "video.other",
   });
-}
-
-export async function clientLoader() {
-  if (!sessionStorage.getItem("token")) {
-    redirectToLogin();
-  }
-  return null;
 }
 
 export default function Asset() {

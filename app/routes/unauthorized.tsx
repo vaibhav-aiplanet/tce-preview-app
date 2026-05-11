@@ -1,4 +1,5 @@
 import { Button, Card } from "@heroui/react";
+import { logout } from "~/lib/auth";
 
 export default function Unauthorized() {
   return (
@@ -10,14 +11,7 @@ export default function Unauthorized() {
           <p className="text-sm text-default-500">
             Required roles: CONTENT_ADMIN or CONTENT_REVIEWER
           </p>
-          <Button
-            className="mt-2"
-            variant="primary"
-            onPress={() => {
-              sessionStorage.clear();
-              window.location.href = "/";
-            }}
-          >
+          <Button className="mt-2" variant="primary" onPress={logout}>
             Logout and Try Another Account
           </Button>
         </div>

@@ -23,6 +23,9 @@ export default [
   route("_api/content-files/:id", "routes/api.content-files.$id.ts"),
   route("_api/content-files/:id/json", "routes/api.content-files.$id.json.ts"),
 
+  route("api/auth/logout", "routes/api.auth.logout.tsx"),
+  route("api/*", "routes/api.proxy.tsx"),
+
   route("auth/callback", "routes/auth.callback.tsx"),
   route("unauthorized", "routes/unauthorized.tsx"),
   route("mapped-assets", "routes/mapped-assets.tsx"),

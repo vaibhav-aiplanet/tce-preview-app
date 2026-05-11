@@ -1,9 +1,14 @@
+import { redirect } from "react-router";
 import { env } from "./env";
+import { parseAuthCookies, buildClearCookieHeaders } from "./auth-cookies";
 
 export type AuthedUser = {
   id: string;
   email: string;
   role: string;
+  userName: string;
+  firstName: string;
+  lastName: string;
 };
 
 export class AuthError extends Error {
@@ -15,7 +20,7 @@ export class AuthError extends Error {
   }
 }
 
-async function validateBearer(token: string): Promise<AuthedUser> {
+export async function validateBearer(token: string): Promise<AuthedUser> {
   const url = `${env.api_proxy_target}/api/v1/api/user/oauth/token/validate`;
   const resp = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
@@ -28,14 +33,16 @@ async function validateBearer(token: string): Promise<AuthedUser> {
     id: data.userInfo.id,
     email: data.userInfo.email,
     role: data.userInfo.role,
+    userName: data.userInfo.user_name,
+    firstName: data.userInfo.first_name,
+    lastName: data.userInfo.last_name,
   };
 }
 
 export async function requireUser(request: Request): Promise<AuthedUser> {
-  const header = request.headers.get("authorization") ?? request.headers.get("Authorization");
-  const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
-  if (!token) throw new AuthError(401, "Missing Authorization header");
-  return validateBearer(token);
+  const { accessToken } = parseAuthCookies(request);
+  if (!accessToken) throw new AuthError(401, "Missing auth cookie");
+  return validateBearer(accessToken);
 }
 
 export async function requireContentAdmin(request: Request): Promise<AuthedUser> {
@@ -51,4 +58,36 @@ export function authErrorResponse(err: unknown): Response {
     return Response.json({ error: err.message }, { status: err.status });
   }
   return Response.json({ error: "Unauthorized" }, { status: 401 });
+}
+
+const ALLOWED_ROLES = new Set(["CONTENT_ADMIN", "CONTENT_REVIEWER"]);
+
+export function buildLmsLoginUrl(request: Request): string {
+  const origin = new URL(request.url).origin;
+  const params = new URLSearchParams();
+  params.set("client", "TCE-TEST-APP");
+  params.set("redirectUri", `${origin}/auth/callback`);
+  return `${env.login_url}/#/login/?${params.toString()}`;
+}
+
+/**
+ * Server loader guard: returns the authed user, or throws a redirect to the
+ * LMS login page (clearing stale cookies). For routes that require an authed,
+ * allowed-role user before rendering.
+ */
+export async function requireAuthedLoader(
+  request: Request,
+): Promise<AuthedUser> {
+  try {
+    const user = await requireUser(request);
+    if (!ALLOWED_ROLES.has(user.role)) {
+      throw redirect("/unauthorized");
+    }
+    return user;
+  } catch (err) {
+    if (err instanceof Response) throw err;
+    throw redirect(buildLmsLoginUrl(request), {
+      headers: buildClearCookieHeaders(),
+    });
+  }
 }

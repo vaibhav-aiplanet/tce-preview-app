@@ -14,7 +14,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
-import { ensureAuthenticated } from "~/lib/auth";
+import { requireAuthedLoader, type AuthedUser } from "~/lib/server-auth";
 import { useBatchAssetData } from "~/lib/tce-queries";
 import AssetGrid from "~/components/AssetGrid";
 import AssetGridSkeleton from "~/components/AssetGridSkeleton";
@@ -39,8 +39,9 @@ const PAGE_SIZE = 18;
 type Manifest = Record<string, { id?: string; name: string; path: string }[]>;
 
 export async function loader({ request }: Route.LoaderArgs) {
+  const user = await requireAuthedLoader(request);
   const origin = new URL(request.url).origin;
-  return Response.json({ origin });
+  return Response.json({ origin, user });
 }
 
 export function meta({ data }: Route.MetaArgs) {
@@ -53,8 +54,14 @@ export function meta({ data }: Route.MetaArgs) {
   });
 }
 
-export async function clientLoader() {
-  const userInfo = await ensureAuthenticated();
+type HomeLoaderData = { origin: string; user: AuthedUser };
+
+export async function clientLoader({
+  serverLoader,
+}: {
+  serverLoader: () => Promise<HomeLoaderData>;
+}): Promise<HomeLoaderData> {
+  const serverData = await serverLoader();
 
   // Prime the reference lists CurriculumFilters selects consume, so
   // PlayerDialog opens with Board/Grade/Subject populated instantly.
@@ -76,7 +83,7 @@ export async function clientLoader() {
     }),
   ]);
 
-  return userInfo;
+  return serverData;
 }
 clientLoader.hydrate = true as const;
 
@@ -132,8 +139,8 @@ export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const userInfo = useLoaderData<typeof clientLoader>();
-  const isReviewer = userInfo?.userInfo?.role === "CONTENT_REVIEWER";
+  const loaderData = useLoaderData<typeof clientLoader>();
+  const isReviewer = loaderData?.user?.role === "CONTENT_REVIEWER";
   const [batchAssetIds, setBatchAssetIds] = useState<string[]>([]);
   const [fileLoading, setFileLoading] = useState(false);
   const [page, setPage] = useState(0);

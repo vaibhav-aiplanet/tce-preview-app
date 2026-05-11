@@ -1,6 +1,7 @@
 import { Button, Spinner } from "@heroui/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { saveMapping } from "~/lib/curriculum-api";
+import { useUser } from "~/lib/auth";
 import {
     useCurrentGrade,
     useCurrentSubject,
@@ -30,6 +31,7 @@ export default function SaveMappingButton({ assetId, asset }: SaveMappingButtonP
     const [saving, setSaving] = useSaving();
     const [deleting] = useDeleting();
     const qc = useQueryClient();
+    const user = useUser();
 
     const canSave =
         selectedSubject &&
@@ -41,16 +43,12 @@ export default function SaveMappingButton({ assetId, asset }: SaveMappingButtonP
             if (!canSave) return;
             setSaving(true);
 
-            const profile_data = JSON.parse(
-                sessionStorage.getItem("profile") || "{}",
-            );
-
             await saveMapping(assetId, {
                 gradeId: selectedGrade || "",
                 subjectId: selectedSubject || "",
                 chapterId: selectedChapter || "",
                 subtopicId: selectedSubtopic || "",
-                createdBy: profile_data.userName,
+                createdBy: user?.userName ?? "",
                 title: asset?.title || "",
                 mimeType: asset?.mimeType || "",
                 assetType: asset?.assetType || "",

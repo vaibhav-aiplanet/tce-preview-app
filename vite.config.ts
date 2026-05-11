@@ -11,13 +11,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       proxy: {
-        // LMS API
-        "/api": {
-          target: env.VITE_API_PROXY_TARGET,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path: string) => path.replace(/^\/api/, "/api"),
-        },
+        // LMS API: handled by the BFF proxy route at app/routes/api.proxy.tsx
+        // (injects Authorization: Bearer from HttpOnly cookie). Do not add a
+        // vite proxy for /api here, or it would short-circuit the BFF.
         "/ce-static": {
           target: env.VITE_TCE_API_BASE_URL,
           changeOrigin: true,

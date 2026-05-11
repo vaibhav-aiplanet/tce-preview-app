@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import { useNavigate, useLoaderData, data } from "react-router";
+import { useLoaderData, data, redirect } from "react-router";
 import axios from "axios";
 import { Button, Spinner } from "@heroui/react";
 import { redirectToLogin } from "~/lib/auth";
+import { buildSetCookieHeaders } from "~/lib/auth-cookies";
 import { env } from "~/lib/env";
 import type { Route } from "./+types/auth.callback";
 
@@ -25,11 +25,13 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     );
 
-    return {
+    const headers = buildSetCookieHeaders({
       accessToken: response.data.accessToken,
       refreshToken: response.data.refreshToken,
-      userInfo: response.data.userInfo,
-    };
+      expiresIn: response.data.expiresIn,
+    });
+
+    return redirect("/", { headers });
   } catch (err) {
     const message = axios.isAxiosError(err)
       ? err.response?.data?.message || "Token exchange failed"
@@ -41,19 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function AuthCallback() {
   const loaderData = useLoaderData<typeof loader>();
-  const navigate = useNavigate();
-
-  const error = "error" in loaderData ? loaderData.error : null;
-
-  useEffect(() => {
-    if (error || !("accessToken" in loaderData)) return;
-
-    sessionStorage.setItem("token", loaderData.accessToken);
-    sessionStorage.setItem("refreshToken", loaderData.refreshToken);
-    sessionStorage.setItem("profile", JSON.stringify(loaderData.userInfo));
-    const landing = "/";
-    navigate(landing);
-  }, [loaderData, error, navigate]);
+  const error = loaderData && "error" in loaderData ? loaderData.error : null;
 
   if (error) {
     return (
