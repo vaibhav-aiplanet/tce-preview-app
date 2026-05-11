@@ -3,12 +3,12 @@ import type { Route } from "./+types/home";
 import {
   Outlet,
   useNavigate,
-  useLocation,
   useMatches,
   useSearchParams,
   useLoaderData,
 } from "react-router";
 import { Button, Select, Label, ListBox, Spinner } from "@heroui/react";
+import PlayerDialog from "~/components/PlayerDialog";
 import {
   useQuery,
   useQueryClient,
@@ -137,7 +137,6 @@ export function HydrateFallback() {
 
 export default function Home() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const loaderData = useLoaderData<typeof clientLoader>();
   const isReviewer = loaderData?.user?.role === "CONTENT_REVIEWER";
@@ -243,16 +242,31 @@ export default function Home() {
     error: batchError,
   } = useBatchAssetData(pageIds);
 
-  const fromGrid = location.state?.fromGrid === true;
   const matches = useMatches();
   const isAssetRoute = matches.some((m) => "assetId" in m.params);
 
-  const showLayoutContent = !isAssetRoute || (fromGrid && !!batchData);
+  const previewId = searchParams.get("preview");
+  const previewAsset =
+    previewId && batchData
+      ? batchData.assets.find((a) => a.assetId === previewId)
+      : undefined;
 
-  const onAssetSelect = (asset: TCEAsset) =>
-    navigate(`/${asset.assetId}?${searchParams.toString()}`, {
-      state: { fromGrid: true },
+  const onAssetSelect = (asset: TCEAsset) => {
+    const routerSp = new URLSearchParams(searchParams);
+    routerSp.set("preview", asset.assetId);
+    const maskSp = new URLSearchParams(searchParams);
+    maskSp.delete("preview");
+    const maskQuery = maskSp.toString();
+    navigate(`/?${routerSp.toString()}`, {
+      mask: `/${asset.assetId}${maskQuery ? `?${maskQuery}` : ""}`,
     });
+  };
+
+  const closePreview = () => {
+    const sp = new URLSearchParams(searchParams);
+    sp.delete("preview");
+    setSearchParams(sp);
+  };
 
   const showIdleState =
     !batchData && !isBatchLoading && batchAssetIds.length === 0;
@@ -271,8 +285,8 @@ export default function Home() {
     contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (!showLayoutContent) {
-    return <Outlet context={{ batchData }} />;
+  if (isAssetRoute) {
+    return <Outlet />;
   }
 
   return (
@@ -412,7 +426,15 @@ export default function Home() {
         )}
       </div>
 
-      <Outlet context={{ batchData }} />
+      {previewAsset && batchData && (
+        <PlayerDialog
+          asset={previewAsset}
+          accessToken={batchData.accessToken}
+          expiryTime={batchData.expiryTime}
+          expiresIn={batchData.expiresIn}
+          onClose={closePreview}
+        />
+      )}
     </div>
   );
 }

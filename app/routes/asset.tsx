@@ -1,16 +1,9 @@
 import { Input, Spinner } from "@heroui/react";
 import { eq } from "drizzle-orm";
 import { useState } from "react";
-import {
-  useLocation,
-  useNavigate,
-  useOutletContext,
-  useParams,
-  useSearchParams,
-} from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { content_db } from "~/db";
 import { chapter_assets } from "~/db/models/content/chapter-assets";
-import PlayerDialog from "~/components/PlayerDialog";
 import TCEPlayer from "~/components/TCEPlayer";
 import VideoPlayerSkeleton from "~/components/VideoPlayerSkeleton";
 import CurriculumFilters from "~/components/CurriculumFilters";
@@ -20,15 +13,6 @@ import { useTCEPlayerData } from "~/lib/tce-queries";
 import NavBar from "~/components/NavBar";
 import { buildOgMeta } from "~/lib/og-meta";
 import type { Route } from "./+types/asset";
-
-interface OutletContextType {
-  batchData: {
-    accessToken: string;
-    expiryTime: number;
-    expiresIn: number;
-    assets: TCEAsset[];
-  } | null;
-}
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   await requireAuthedLoader(request);
@@ -92,22 +76,16 @@ export function meta({ data, params }: Route.MetaArgs) {
 export default function Asset() {
   const { assetId: paramAssetId } = useParams<{ assetId: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const { batchData } = useOutletContext<OutletContextType>();
   const [inputValue, setInputValue] = useState(paramAssetId || "");
   const role = useUserRole();
   const mode = role === "CONTENT_REVIEWER" ? "reviewer" : "admin";
-
-  const fromGrid = location.state?.fromGrid === true;
-  const gridAsset = batchData?.assets.find((a) => a.assetId === paramAssetId);
 
   const {
     data: playerData,
     isLoading,
     error,
     refetch,
-  } = useTCEPlayerData(fromGrid && gridAsset ? "" : paramAssetId || "");
+  } = useTCEPlayerData(paramAssetId || "");
 
   const handleSubmit = () => {
     const trimmedId = inputValue.trim();
@@ -120,18 +98,6 @@ export default function Asset() {
       handleSubmit();
     }
   };
-
-  if (fromGrid && gridAsset && batchData) {
-    return (
-      <PlayerDialog
-        asset={gridAsset}
-        accessToken={batchData.accessToken}
-        expiryTime={batchData.expiryTime}
-        expiresIn={batchData.expiresIn}
-        onClose={() => navigate(`/?${searchParams.toString()}`)}
-      />
-    );
-  }
 
   return (
     <div className="flex h-screen flex-col bg-background">

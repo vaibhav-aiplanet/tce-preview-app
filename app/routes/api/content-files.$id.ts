@@ -6,7 +6,7 @@ import {
   authErrorResponse,
   requireContentAdmin,
 } from "~/lib/server-auth";
-import type { Route } from "./+types/api.content-files.$id";
+import type { Route } from "./+types/content-files.$id";
 
 export async function action({ request, params }: Route.ActionArgs) {
   if (request.method !== "DELETE") {

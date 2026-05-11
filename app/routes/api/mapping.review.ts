@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { content_db } from "~/db";
 import { tce_asset_mapping } from "~/db/models/content/tce-asset-mapping";
 import { chapter_assets } from "~/db/models/content/chapter-assets";
-import type { Route } from "./+types/api.mapping.review";
+import type { Route } from "./+types/mapping.review";
 
 export async function action({ request }: Route.ActionArgs) {
   if (request.method !== "POST") {
