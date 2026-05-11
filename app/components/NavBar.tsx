@@ -1,5 +1,4 @@
 import { Button, Chip } from "@heroui/react";
-import { useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { logout, useUserRole } from "~/lib/auth";
 
@@ -15,10 +14,9 @@ export default function NavBar() {
       : null;
 
   const location = useLocation();
-
-  const isMappedAssetsRoute = useMemo(() => location.pathname === "/mapped-assets", [location]);
-  const isHomeRoute = useMemo(() => location.pathname === "/", [location]);
-  const isUploadRoute = useMemo(() => location.pathname === "/content-upload", [location]);
+  const isMappedAssetsRoute = location.pathname === "/mapped-assets";
+  const isHomeRoute = location.pathname === "/";
+  const isUploadRoute = location.pathname === "/content-upload";
   const isAdmin = role === "CONTENT_ADMIN";
 
   return (

@@ -38,7 +38,7 @@ export default function ReviewerHome() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="mb-2 text-3xl font-bold tracking-tight text-foreground">Review Dashboard</h1>
+        <h1 className="mb-2 text-3xl font-semibold tracking-tight text-foreground">Review Dashboard</h1>
         <p className="mb-8 text-muted">
           Overview of asset review status. Use the Review Queue to take action on pending
           submissions.
@@ -47,7 +47,7 @@ export default function ReviewerHome() {
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted">
             <Spinner size="sm" />
-            Loading asset counts...
+            Loading asset counts…
           </div>
         )}
 

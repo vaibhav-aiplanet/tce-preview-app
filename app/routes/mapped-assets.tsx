@@ -40,8 +40,14 @@ interface MappedAsset {
 function useUniqueValues(assets: MappedAsset[], key: keyof MappedAsset) {
   return useMemo(
     () =>
-      [...new Set(assets.map((a) => a[key]).filter(Boolean))]
-        .sort() as string[],
+      [
+        ...new Set(
+          assets.flatMap((a) => {
+            const v = a[key];
+            return v ? [v as string] : [];
+          }),
+        ),
+      ].toSorted(),
     [assets, key],
   );
 }
@@ -268,7 +274,7 @@ export default function MappedAssetsPage() {
         {isLoading && (
           <div className="flex items-center gap-2 text-sm text-muted">
             <Spinner size="sm" />
-            Loading...
+            Loading…
           </div>
         )}
 
@@ -608,7 +614,7 @@ export default function MappedAssetsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="flex items-center gap-3 rounded-lg bg-background px-6 py-4">
             <Spinner size="sm" />
-            <span className="text-sm">Loading player...</span>
+            <span className="text-sm">Loading player…</span>
           </div>
         </div>
       )}
