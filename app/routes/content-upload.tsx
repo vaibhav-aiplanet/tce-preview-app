@@ -14,6 +14,8 @@ import {
 import type { ContentFilesManifest } from "./api.content-files";
 import type { Route } from "./+types/content-upload";
 
+const SAMPLE_FILE_URL = "/sample-content-upload.xls";
+
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAuthedLoader(request);
   return null;
@@ -166,15 +168,32 @@ export default function ContentUpload() {
       <NavBar />
 
       <div className="flex-1 overflow-auto px-6 pt-5 pb-10">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Upload Content
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          Upload Excel sheets containing TCE asset IDs. Files are parsed on the
-          server and stored as JSON in S3. Filename convention:{" "}
-          <code>Subject-Subtopic-….xlsx</code> (use{" "}
-          <code>NA</code> for the subtopic when there is none).
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Upload Content
+            </h1>
+            <p className="mt-1 text-sm text-muted">
+              Upload Excel sheets containing TCE asset IDs. Files are parsed on
+              the server and stored as JSON in S3. Filename convention:{" "}
+              <code>Subject-Subtopic-….xlsx</code> (use <code>NA</code> for the
+              subtopic when there is none).
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
+            onPress={() => {
+              const a = document.createElement("a");
+              a.href = SAMPLE_FILE_URL;
+              a.download = "";
+              a.click();
+            }}
+          >
+            Download Sample File
+          </Button>
+        </div>
 
         <div className="mt-6 max-w-xl">
           <Select
