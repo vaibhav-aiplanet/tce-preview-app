@@ -3,10 +3,6 @@
   "framework": "react-router",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://dev-lms-v4.azvasa.online/api/:path*"
-    },
-    {
       "source": "/tceplayer-two/:path*",
       "destination": "https://ce-qa-azvasa.devstudi.com/tceplayer-two/:path*"
     },
