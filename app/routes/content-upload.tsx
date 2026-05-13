@@ -17,8 +17,11 @@ import type { Route } from "./+types/content-upload";
 const SAMPLE_FILE_URL = "/sample-content-upload.xls";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuthedLoader(request);
-  return null;
+  const { setCookieHeaders } = await requireAuthedLoader(request);
+  return Response.json(
+    null,
+    setCookieHeaders ? { headers: setCookieHeaders } : undefined,
+  );
 }
 
 type UploadResult = {

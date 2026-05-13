@@ -15,9 +15,10 @@ import { buildOgMeta } from "~/lib/og-meta";
 import type { Route } from "./+types/asset";
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  await requireAuthedLoader(request);
+  const { setCookieHeaders } = await requireAuthedLoader(request);
+  const responseInit = setCookieHeaders ? { headers: setCookieHeaders } : undefined;
   const assetId = params.assetId;
-  if (!assetId) return Response.json(null);
+  if (!assetId) return Response.json(null, responseInit);
 
   const url = new URL(request.url);
   const grade = url.searchParams.get("grade") || "";
@@ -38,13 +39,16 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         .replace(/\+/g, " ")
     : "";
 
-  return Response.json({
-    title,
-    grade,
-    bookName,
-    origin: url.origin,
-    pageUrl: url.href,
-  });
+  return Response.json(
+    {
+      title,
+      grade,
+      bookName,
+      origin: url.origin,
+      pageUrl: url.href,
+    },
+    responseInit,
+  );
 }
 
 export function meta({ data, params }: Route.MetaArgs) {

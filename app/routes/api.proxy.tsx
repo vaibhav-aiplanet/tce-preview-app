@@ -8,6 +8,7 @@ import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
 } from "~/lib/auth-cookies";
+import { tryRefresh } from "~/lib/server-auth";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   return proxy(request, params);
@@ -147,25 +148,6 @@ async function forward(
     body,
     redirect: "manual",
   });
-}
-
-async function tryRefresh(
-  refreshToken: string,
-): Promise<TokenRefreshResponse | null> {
-  try {
-    const resp = await fetch(
-      `${env.api_proxy_target}/api/v1/api/user/oauth/token/refresh`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      },
-    );
-    if (!resp.ok) return null;
-    return (await resp.json()) as TokenRefreshResponse;
-  } catch {
-    return null;
-  }
 }
 
 function appendJsonHeaders(headers: Headers): Headers {

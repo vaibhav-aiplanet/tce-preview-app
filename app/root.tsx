@@ -20,12 +20,18 @@ export const queryClient = new QueryClient();
 export async function loader({ request }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
   let user: AuthedUser | null = null;
+  let setCookieHeaders: Headers | null = null;
   try {
-    user = await requireUser(request);
+    const result = await requireUser(request);
+    user = result.user;
+    setCookieHeaders = result.setCookieHeaders;
   } catch {
     user = null;
   }
-  return Response.json({ origin, user });
+  return Response.json(
+    { origin, user },
+    setCookieHeaders ? { headers: setCookieHeaders } : undefined,
+  );
 }
 
 export const meta: Route.MetaFunction = ({ data }) => {

@@ -1,6 +1,11 @@
 import { redirect } from "react-router";
 import { env } from "./env";
-import { parseAuthCookies, buildClearCookieHeaders } from "./auth-cookies";
+import {
+  parseAuthCookies,
+  buildAccessCookieHeader,
+  buildRefreshCookieHeader,
+  buildClearCookieHeaders,
+} from "./auth-cookies";
 
 export type AuthedUser = {
   id: string;
@@ -9,6 +14,11 @@ export type AuthedUser = {
   userName: string;
   firstName: string;
   lastName: string;
+};
+
+export type AuthResult = {
+  user: AuthedUser;
+  setCookieHeaders: Headers | null;
 };
 
 export class AuthError extends Error {
@@ -39,18 +49,81 @@ export async function validateBearer(token: string): Promise<AuthedUser> {
   };
 }
 
-export async function requireUser(request: Request): Promise<AuthedUser> {
-  const { accessToken } = parseAuthCookies(request);
-  if (!accessToken) throw new AuthError(401, "Missing auth cookie");
-  return validateBearer(accessToken);
+export async function tryRefresh(
+  refreshToken: string,
+): Promise<TokenRefreshResponse | null> {
+  try {
+    const resp = await fetch(
+      `${env.api_proxy_target}/api/v1/api/user/oauth/token/refresh`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      },
+    );
+    if (!resp.ok) return null;
+    return (await resp.json()) as TokenRefreshResponse;
+  } catch {
+    return null;
+  }
 }
 
-export async function requireContentAdmin(request: Request): Promise<AuthedUser> {
-  const user = await requireUser(request);
-  if (user.role !== "CONTENT_ADMIN") {
+function buildRefreshedCookieHeaders(
+  refreshed: TokenRefreshResponse,
+): Headers {
+  const headers = new Headers();
+  headers.append(
+    "Set-Cookie",
+    buildAccessCookieHeader(refreshed.access_token, refreshed.expires_in),
+  );
+  headers.append(
+    "Set-Cookie",
+    buildRefreshCookieHeader(refreshed.refresh_token),
+  );
+  return headers;
+}
+
+async function authenticate(request: Request): Promise<AuthResult> {
+  const { accessToken, refreshToken } = parseAuthCookies(request);
+
+  if (accessToken) {
+    try {
+      const user = await validateBearer(accessToken);
+      return { user, setCookieHeaders: null };
+    } catch (err) {
+      if (!(err instanceof AuthError)) throw err;
+      // 401 from validate — fall through to refresh attempt.
+    }
+  }
+
+  if (!refreshToken) {
+    throw new AuthError(401, "Missing auth cookie");
+  }
+
+  const refreshed = await tryRefresh(refreshToken);
+  if (!refreshed) {
+    throw new AuthError(401, "Refresh failed");
+  }
+
+  const user = await validateBearer(refreshed.access_token);
+  return {
+    user,
+    setCookieHeaders: buildRefreshedCookieHeaders(refreshed),
+  };
+}
+
+export async function requireUser(request: Request): Promise<AuthResult> {
+  return authenticate(request);
+}
+
+export async function requireContentAdmin(
+  request: Request,
+): Promise<AuthResult> {
+  const result = await authenticate(request);
+  if (result.user.role !== "CONTENT_ADMIN") {
     throw new AuthError(403, "Forbidden: requires CONTENT_ADMIN role");
   }
-  return user;
+  return result;
 }
 
 export function authErrorResponse(err: unknown): Response {
@@ -71,19 +144,22 @@ export function buildLmsLoginUrl(request: Request): string {
 }
 
 /**
- * Server loader guard: returns the authed user, or throws a redirect to the
- * LMS login page (clearing stale cookies). For routes that require an authed,
- * allowed-role user before rendering.
+ * Server loader guard: returns the authed user (plus any Set-Cookie headers
+ * from a token refresh that callers must attach to their response), or throws
+ * a redirect to the LMS login page (clearing stale cookies). For routes that
+ * require an authed, allowed-role user before rendering.
  */
 export async function requireAuthedLoader(
   request: Request,
-): Promise<AuthedUser> {
+): Promise<AuthResult> {
   try {
-    const user = await requireUser(request);
-    if (!ALLOWED_ROLES.has(user.role)) {
-      throw redirect("/unauthorized");
+    const result = await authenticate(request);
+    if (!ALLOWED_ROLES.has(result.user.role)) {
+      throw redirect("/unauthorized", {
+        headers: result.setCookieHeaders ?? undefined,
+      });
     }
-    return user;
+    return result;
   } catch (err) {
     if (err instanceof Response) throw err;
     throw redirect(buildLmsLoginUrl(request), {

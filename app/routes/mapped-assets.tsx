@@ -16,8 +16,11 @@ import {
 import type { Route } from "./+types/mapped-assets";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuthedLoader(request);
-  return null;
+  const { setCookieHeaders } = await requireAuthedLoader(request);
+  return Response.json(
+    null,
+    setCookieHeaders ? { headers: setCookieHeaders } : undefined,
+  );
 }
 
 interface MappedAsset {

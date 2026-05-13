@@ -13,8 +13,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     return Response.json({ error: "Method not allowed" }, { status: 405 });
   }
 
+  let setCookieHeaders: Headers | null = null;
   try {
-    await requireContentAdmin(request);
+    ({ setCookieHeaders } = await requireContentAdmin(request));
   } catch (err) {
     if (err instanceof AuthError) return authErrorResponse(err);
     throw err;
@@ -32,8 +33,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     .returning({ id: content_files.id });
 
   if (updated.length === 0) {
-    return Response.json({ error: "Not found" }, { status: 404 });
+    return Response.json(
+      { error: "Not found" },
+      { status: 404, headers: setCookieHeaders ?? undefined },
+    );
   }
 
-  return Response.json({ ok: true });
+  return Response.json(
+    { ok: true },
+    setCookieHeaders ? { headers: setCookieHeaders } : undefined,
+  );
 }

@@ -39,9 +39,12 @@ const PAGE_SIZE = 18;
 type Manifest = Record<string, { id?: string; name: string; path: string }[]>;
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const user = await requireAuthedLoader(request);
+  const { user, setCookieHeaders } = await requireAuthedLoader(request);
   const origin = new URL(request.url).origin;
-  return Response.json({ origin, user });
+  return Response.json(
+    { origin, user },
+    setCookieHeaders ? { headers: setCookieHeaders } : undefined,
+  );
 }
 
 export function meta({ data }: Route.MetaArgs) {

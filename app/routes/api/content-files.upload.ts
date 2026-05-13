@@ -27,8 +27,11 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   let user;
+  let setCookieHeaders: Headers | null = null;
   try {
-    user = await requireContentAdmin(request);
+    const result = await requireContentAdmin(request);
+    user = result.user;
+    setCookieHeaders = result.setCookieHeaders;
   } catch (err) {
     if (err instanceof AuthError) return authErrorResponse(err);
     throw err;
@@ -123,5 +126,8 @@ export async function action({ request }: Route.ActionArgs) {
     }),
   );
 
-  return Response.json({ uploaded: results });
+  return Response.json(
+    { uploaded: results },
+    setCookieHeaders ? { headers: setCookieHeaders } : undefined,
+  );
 }
