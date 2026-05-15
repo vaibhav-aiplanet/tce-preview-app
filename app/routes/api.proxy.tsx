@@ -55,7 +55,7 @@ const RESPONSE_HEADERS_TO_STRIP = new Set([
 async function proxy(request: Request, params: { "*"?: string }) {
   const subpath = params["*"] ?? "";
   const url = new URL(request.url);
-  const target = `${env.api_proxy_target}/api/${subpath}${url.search}`;
+  const target = `${env.api_proxy_target}/${subpath}${url.search}`;
 
   const { accessToken, refreshToken } = parseAuthCookies(request);
 

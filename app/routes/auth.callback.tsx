@@ -16,7 +16,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   try {
     const response = await axios.post<OAuthTokenResponse>(
-      `${env.api_proxy_target}/api/v1/api/user/oauth/token`,
+      `${env.api_proxy_target}/v1/api/user/oauth/token`,
       {
         code,
         clientId: "TCE-TEST-APP",
