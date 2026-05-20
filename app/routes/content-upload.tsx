@@ -14,7 +14,7 @@ import {
 import type { ContentFilesManifest } from "./api.content-files";
 import type { Route } from "./+types/content-upload";
 
-const SAMPLE_FILE_URL = "/sample-content-upload.xls";
+const SAMPLE_FILE_URL = "/sample-content-upload.xlsx";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { setCookieHeaders } = await requireAuthedLoader(request);
@@ -42,7 +42,9 @@ type StagedFile = {
 };
 
 function stageFile(file: File): StagedFile {
-  const { subject_name, subtopic_name } = deriveBookMetadataFromFilename(file.name);
+  const { subject_name, subtopic_name } = deriveBookMetadataFromFilename(
+    file.name,
+  );
   return {
     id: crypto.randomUUID(),
     file,
@@ -79,7 +81,9 @@ export default function ContentUpload() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
       "application/vnd.ms-excel": [".xls"],
     },
     multiple: true,
@@ -88,7 +92,9 @@ export default function ContentUpload() {
   const removeStaged = (id: string) =>
     setStaged((prev) => prev.filter((s) => s.id !== id));
 
-  const { data: gradesList = [], isLoading: gradesLoading } = useQuery<CurriculumItem[]>({
+  const { data: gradesList = [], isLoading: gradesLoading } = useQuery<
+    CurriculumItem[]
+  >({
     queryKey: ["grades"],
     queryFn: () => fetch("/_api/grades").then((r) => r.json()),
     staleTime: Infinity,
@@ -97,21 +103,24 @@ export default function ContentUpload() {
   const selectedGradeName = useMemo(
     () =>
       selectedGradeId
-        ? gradesList.find((g) => g.id === selectedGradeId)?.name ?? ""
+        ? (gradesList.find((g) => g.id === selectedGradeId)?.name ?? "")
         : "",
     [gradesList, selectedGradeId],
   );
-  const selectedGradeNumber = selectedGradeName ? gradeKey(selectedGradeName) : "";
+  const selectedGradeNumber = selectedGradeName
+    ? gradeKey(selectedGradeName)
+    : "";
 
-  const { data: manifest, isLoading: manifestLoading } = useQuery<ContentFilesManifest>({
-    queryKey: ["content-files-manifest"],
-    queryFn: () => fetch("/_api/content-files").then((r) => r.json()),
-  });
+  const { data: manifest, isLoading: manifestLoading } =
+    useQuery<ContentFilesManifest>({
+      queryKey: ["content-files-manifest"],
+      queryFn: () => fetch("/_api/content-files").then((r) => r.json()),
+    });
 
   const existingForGrade = useMemo(
     () =>
       selectedGradeNumber && manifest
-        ? manifest[selectedGradeNumber] ?? []
+        ? (manifest[selectedGradeNumber] ?? [])
         : [],
     [manifest, selectedGradeNumber],
   );
@@ -164,7 +173,9 @@ export default function ContentUpload() {
   });
 
   const canUpload =
-    !!selectedGradeId && staged.some((s) => s.valid) && !uploadMutation.isPending;
+    !!selectedGradeId &&
+    staged.some((s) => s.valid) &&
+    !uploadMutation.isPending;
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -308,17 +319,24 @@ export default function ContentUpload() {
             </h2>
             <ul className="mt-3 divide-y divide-border/50 rounded-md border border-border/50">
               {results.map((r, i) => (
-                <li key={r.id ?? `${r.filename}-${i}`} className="px-4 py-2 text-sm">
+                <li
+                  key={r.id ?? `${r.filename}-${i}`}
+                  className="px-4 py-2 text-sm"
+                >
                   <span
                     className={
-                      r.ok ? "text-success font-medium" : "text-danger font-medium"
+                      r.ok
+                        ? "text-success font-medium"
+                        : "text-danger font-medium"
                     }
                   >
                     {r.ok ? "OK" : "FAIL"}
                   </span>{" "}
                   <span className="font-medium">{r.filename}</span>
                   {r.ok && (
-                    <span className="text-muted">: {r.asset_count} asset(s)</span>
+                    <span className="text-muted">
+                      : {r.asset_count} asset(s)
+                    </span>
                   )}
                   {!r.ok && r.error && (
                     <span className="text-danger">: {r.error}</span>
