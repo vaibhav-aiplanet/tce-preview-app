@@ -31,7 +31,7 @@ export class AuthError extends Error {
 }
 
 export async function validateBearer(token: string): Promise<AuthedUser> {
-  const url = `${env.api_proxy_target}/v1/api/user/oauth/token/validate`;
+  const url = `${env.api_proxy_target}/api/v1/api/user/oauth/token/validate`;
   const resp = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -54,7 +54,7 @@ export async function tryRefresh(
 ): Promise<TokenRefreshResponse | null> {
   try {
     const resp = await fetch(
-      `${env.api_proxy_target}/v1/api/user/oauth/token/refresh`,
+      `${env.api_proxy_target}/api/v1/api/user/oauth/token/refresh`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
