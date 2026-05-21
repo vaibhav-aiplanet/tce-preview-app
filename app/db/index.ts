@@ -9,3 +9,6 @@ export const master_db = drizzle(queryClient);
 
 const contentClient = postgres(env.content_db_url, { ssl: "require" });
 export const content_db = drizzle(contentClient);
+
+const usersClient = postgres(env.users_db_url, { ssl: "require" });
+export const users_db = drizzle(usersClient);

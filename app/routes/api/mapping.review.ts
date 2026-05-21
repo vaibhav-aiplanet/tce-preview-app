@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { content_db } from "~/db";
 import { tce_asset_mapping } from "~/db/models/content/tce-asset-mapping";
 import { chapter_assets } from "~/db/models/content/chapter-assets";
+import { notifySubmitter } from "~/lib/inbox";
 import type { Route } from "./+types/mapping.review";
 
 export async function action({ request }: Route.ActionArgs) {
@@ -63,7 +64,10 @@ export async function action({ request }: Route.ActionArgs) {
           eq(tce_asset_mapping.status, "PENDING"),
         ),
       )
-      .returning({ chapter_asset_id: tce_asset_mapping.chapter_asset_id });
+      .returning({
+        chapter_asset_id: tce_asset_mapping.chapter_asset_id,
+        created_by: tce_asset_mapping.created_by,
+      });
 
     if (rows.length === 0) return null;
 
@@ -89,6 +93,30 @@ export async function action({ request }: Route.ActionArgs) {
       { error: "Submission is no longer pending" },
       { status: 409 },
     );
+  }
+
+  if (updated.created_by) {
+    try {
+      let title = assetId;
+      if (updated.chapter_asset_id) {
+        const titleRows = await content_db
+          .select({ title: chapter_assets.title })
+          .from(chapter_assets)
+          .where(eq(chapter_assets.id, updated.chapter_asset_id))
+          .limit(1);
+        if (titleRows[0]?.title) title = titleRows[0].title;
+      }
+      await notifySubmitter(request, {
+        action: reviewAction === "approve" ? "APPROVED" : "REJECTED",
+        assetId,
+        title,
+        reason: reviewAction === "reject" ? reason : undefined,
+        receiverId: updated.created_by,
+        senderId: reviewedBy,
+      });
+    } catch (err) {
+      console.error("[mapping.review] notifySubmitter failed:", err);
+    }
   }
 
   return Response.json({ ok: true });

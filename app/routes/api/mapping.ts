@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { content_db } from "~/db";
 import { tce_asset_mapping } from "~/db/models/content/tce-asset-mapping";
 import { chapter_assets } from "~/db/models/content/chapter-assets";
+import { notifyReviewers } from "~/lib/inbox";
 import type { Route } from "./+types/mapping";
 
 function generateId(): string {
@@ -144,11 +145,19 @@ export async function action({ request }: Route.ActionArgs) {
   const chapterIdRaw = chapterId.replace(/-/g, "");
   const now = Date.now();
 
+  let shouldNotifyReviewers = false;
+
   await content_db.transaction(async (tx) => {
     const existing = await tx
       .select()
       .from(tce_asset_mapping)
       .where(eq(tce_asset_mapping.asset_id, assetId));
+
+    // Notify reviewers on net-new submissions and on resubmits of previously
+    // rejected mappings. Skip benign re-saves of an already-pending row so we
+    // don't spam the inbox.
+    shouldNotifyReviewers =
+      existing.length === 0 || existing[0]?.status === "REJECTED";
 
     // chapter_assets.active is wired to mapping.status: a fresh submission is
     // PENDING and not live until a reviewer approves it. Approval flips
@@ -240,6 +249,19 @@ export async function action({ request }: Route.ActionArgs) {
       }
     }
   });
+
+  if (shouldNotifyReviewers) {
+    try {
+      await notifyReviewers(request, {
+        action: "SUBMITTED",
+        assetId,
+        title: title || assetId,
+        senderId: createdBy,
+      });
+    } catch (err) {
+      console.error("[mapping] notifyReviewers failed:", err);
+    }
+  }
 
   return Response.json({ ok: true });
 }

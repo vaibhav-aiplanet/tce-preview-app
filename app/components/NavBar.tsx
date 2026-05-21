@@ -1,6 +1,7 @@
 import { Button, Chip } from "@heroui/react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { logout, useUserRole } from "~/lib/auth";
+import InboxBell from "~/components/InboxBell";
 
 export default function NavBar() {
   const navigate = useNavigate();
@@ -62,6 +63,7 @@ export default function NavBar() {
             Upload Content
           </Button>
         )}
+        <InboxBell />
         <Button variant="ghost" size="sm" onPress={logout}>
           Logout
         </Button>
