@@ -43,24 +43,19 @@ export async function validateBearer(token: string): Promise<AuthedUser> {
     id: data.userInfo.id,
     email: data.userInfo.email,
     role: data.userInfo.role,
-    userName: data.userInfo.user_name,
-    firstName: data.userInfo.first_name,
-    lastName: data.userInfo.last_name,
+    userName: data.userInfo.userName,
+    firstName: data.userInfo.firstName,
+    lastName: data.userInfo.lastName,
   };
 }
 
-export async function tryRefresh(
-  refreshToken: string,
-): Promise<TokenRefreshResponse | null> {
+export async function tryRefresh(refreshToken: string): Promise<TokenRefreshResponse | null> {
   try {
-    const resp = await fetch(
-      `${env.api_proxy_target}/api/v1/api/user/oauth/token/refresh`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      },
-    );
+    const resp = await fetch(`${env.api_proxy_target}/api/v1/api/user/oauth/token/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
     if (!resp.ok) return null;
     return (await resp.json()) as TokenRefreshResponse;
   } catch {
@@ -74,10 +69,7 @@ function buildRefreshedCookieHeaders(refreshed: TokenRefreshResponse): Headers {
     "Set-Cookie",
     buildAccessCookieHeader(refreshed.access_token, refreshed.expires_in),
   );
-  headers.append(
-    "Set-Cookie",
-    buildRefreshCookieHeader(refreshed.refresh_token),
-  );
+  headers.append("Set-Cookie", buildRefreshCookieHeader(refreshed.refresh_token));
   return headers;
 }
 
@@ -114,9 +106,7 @@ export async function requireUser(request: Request): Promise<AuthResult> {
   return authenticate(request);
 }
 
-export async function requireContentAdmin(
-  request: Request,
-): Promise<AuthResult> {
+export async function requireContentAdmin(request: Request): Promise<AuthResult> {
   const result = await authenticate(request);
   if (result.user.role !== "CONTENT_ADMIN") {
     throw new AuthError(403, "Forbidden: requires CONTENT_ADMIN role");
@@ -147,9 +137,7 @@ export function buildLmsLoginUrl(request: Request): string {
  * a redirect to the LMS login page (clearing stale cookies). For routes that
  * require an authed, allowed-role user before rendering.
  */
-export async function requireAuthedLoader(
-  request: Request,
-): Promise<AuthResult> {
+export async function requireAuthedLoader(request: Request): Promise<AuthResult> {
   try {
     const result = await authenticate(request);
     if (!ALLOWED_ROLES.has(result.user.role)) {

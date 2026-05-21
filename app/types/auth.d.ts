@@ -31,9 +31,9 @@ interface TokenValidateResponse {
   expires_at: string;
   userInfo: {
     id: string;
-    first_name: string;
-    last_name: string;
-    user_name: string;
+    firstName: string;
+    lastName: string;
+    userName: string;
     email: string;
     role: string;
     is_active: boolean;
