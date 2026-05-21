@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   useMutation,
   useQuery,
@@ -277,14 +278,18 @@ export default function InboxBell() {
         </PopoverContent>
       </Popover>
 
-      {selectedAssetId && playerLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="flex items-center gap-3 rounded-lg bg-background px-6 py-4">
-            <Spinner size="sm" />
-            <span className="text-sm">Loading player…</span>
-          </div>
-        </div>
-      )}
+      {selectedAssetId &&
+        playerLoading &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="flex items-center gap-3 rounded-lg bg-background px-6 py-4">
+              <Spinner size="sm" />
+              <span className="text-sm">Loading player…</span>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {selectedAssetId && playerData && (
         <PlayerDialog
