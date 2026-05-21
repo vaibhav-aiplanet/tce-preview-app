@@ -239,8 +239,8 @@ export default function InboxBell() {
                       <button
                         type="button"
                         onClick={() => handleClick(msg)}
-                        className={`flex w-full flex-col gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/10 ${
-                          msg.isRead ? "" : "bg-primary/5"
+                        className={`flex w-full flex-col gap-1.5 px-4 py-3 text-left transition-colors hover:bg-muted/15 ${
+                          msg.isRead ? "bg-muted/10 opacity-70" : "bg-primary/5"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
