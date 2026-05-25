@@ -33,5 +33,17 @@ export async function logout() {
   } catch {
     // best-effort: cookies may not clear if server unreachable; still redirect
   }
-  window.location.href = "/";
+  // Land on the LMS login page with:
+  //   - skipSso=true   -> LMS does NOT silently SSO the existing session
+  //                        straight back into TCE (no interstitial loop)
+  //   - client + redirectUri -> when the user manually re-submits the login
+  //                        form, the LMS authenticate handler reads these
+  //                        and bounces back to TCE with a fresh auth code,
+  //                        so the user lands in TCE after re-logging in.
+  // The LMS session itself is left intact.
+  const params = new URLSearchParams();
+  params.set("client", "TCE-TEST-APP");
+  params.set("redirectUri", `${window.location.origin}/auth/callback`);
+  params.set("skipSso", "true");
+  window.location.href = `${env.login_url}/#/login/?${params.toString()}`;
 }
