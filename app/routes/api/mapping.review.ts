@@ -1,7 +1,8 @@
-import { and, eq } from "drizzle-orm";
-import { content_db } from "~/db";
+import { and, eq, ne } from "drizzle-orm";
+import { content_db, master_db } from "~/db";
 import { tce_asset_mapping } from "~/db/models/content/tce-asset-mapping";
 import { chapter_assets } from "~/db/models/content/chapter-assets";
+import { chapters } from "~/db/models/master/chapters";
 import { notifySubmitter } from "~/lib/inbox";
 import type { Route } from "./+types/mapping.review";
 
@@ -66,6 +67,7 @@ export async function action({ request }: Route.ActionArgs) {
       )
       .returning({
         chapter_asset_id: tce_asset_mapping.chapter_asset_id,
+        chapter_id: tce_asset_mapping.chapter_id,
         created_by: tce_asset_mapping.created_by,
       });
 
@@ -93,6 +95,37 @@ export async function action({ request }: Route.ActionArgs) {
       { error: "Submission is no longer pending" },
       { status: 409 },
     );
+  }
+
+  // Mirror the LMS behavior: approving any asset under a chapter promotes that
+  // chapter's master-side status to APPROVED. Without this, a newly-created
+  // chapter stays PENDING in the master service and end users never see the
+  // asset even though chapter_assets.active is true.
+  if (reviewAction === "approve" && updated.chapter_id) {
+    const chapterIdRaw = updated.chapter_id.replace(/-/g, "");
+    try {
+      await master_db
+        .update(chapters)
+        .set({
+          chapter_status: "APPROVED",
+          approved_at: Date.now(),
+          approved_by: reviewedBy,
+          rejected_at: null,
+          rejected_by: null,
+          reason: null,
+          last_modified_by: reviewedBy,
+          modified_at: Date.now(),
+        })
+        .where(
+          and(
+            eq(chapters.id, chapterIdRaw),
+            eq(chapters.deleted, false),
+            ne(chapters.chapter_status, "APPROVED"),
+          ),
+        );
+    } catch (err) {
+      console.error("[mapping.review] chapter status promotion failed:", err);
+    }
   }
 
   if (updated.created_by) {
