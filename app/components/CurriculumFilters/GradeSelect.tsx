@@ -20,6 +20,7 @@ export default function GradeSelect() {
             items={grades}
             value={value as string}
             onChange={setGrade}
+            sortBy="sortOrder"
         />
     );
 }

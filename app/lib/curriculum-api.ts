@@ -1,6 +1,7 @@
 export interface CurriculumItem {
   id: string;
   name: string;
+  sortOrder?: number;
 }
 
 export type MappingStatus = "PENDING" | "APPROVED" | "REJECTED";
