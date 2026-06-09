@@ -1,13 +1,25 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Modal, Spinner, TextArea } from "@heroui/react";
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  fetchChapters,
+  fetchSubjects,
+  fetchSubtopics,
   ReviewConflictError,
   reviewMapping,
   type AssetMapping,
+  type CurriculumItem,
 } from "~/lib/curriculum-api";
 import { useUser } from "~/lib/auth";
+import ReviewResultDialog from "~/components/ReviewResultDialog";
+import {
+  useCurrentBoard,
+  useCurrentChapter,
+  useCurrentGrade,
+  useCurrentSubject,
+  useCurrentSubtopic,
+} from "~/store";
 
 interface ReviewActionsProps {
   assetId: string;
@@ -21,7 +33,10 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
     null,
   );
   const [rejectOpen, setRejectOpen] = useState(false);
-  const [approveSuccessOpen, setApproveSuccessOpen] = useState(false);
+  const [result, setResult] = useState<{
+    variant: "approved" | "rejected";
+    reason?: string;
+  } | null>(null);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +45,57 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
 
   const user = useUser();
   const reviewedBy = user?.userName ?? "";
+
+  // Resolve the mapped curriculum IDs to display names. These query keys match
+  // the curriculum selects, so they're served from cache (no extra fetch).
+  const board = useCurrentBoard();
+  const grade = useCurrentGrade();
+  const subject = useCurrentSubject();
+  const chapter = useCurrentChapter();
+  const subtopic = useCurrentSubtopic();
+
+  const { data: grades = [] } = useQuery<CurriculumItem[]>({
+    queryKey: ["grades"],
+    queryFn: () => fetch("/_api/grades").then((r) => r.json()),
+    staleTime: Infinity,
+  });
+  const { data: subjects = [] } = useQuery({
+    queryKey: ["subjects", board, grade],
+    queryFn: () => fetchSubjects(board || "", grade || ""),
+    enabled: !!subject,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: chapters = [] } = useQuery({
+    queryKey: ["chapters", subject, board, grade],
+    queryFn: () => fetchChapters(subject || "", board || "", grade || ""),
+    enabled: !!subject,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: subtopics = [] } = useQuery({
+    queryKey: ["subtopics", subject],
+    queryFn: () => fetchSubtopics(subject || ""),
+    enabled: !!subject,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const nameOf = (items: CurriculumItem[], id: string | null) =>
+    (id && items.find((i) => i.id === id)?.name) || null;
+
+  const mapped = useMemo(
+    () => ({
+      grade: nameOf(grades, grade),
+      subject: nameOf(subjects, subject),
+      chapter: nameOf(chapters, chapter),
+      subtopic: nameOf(subtopics, subtopic),
+    }),
+    [grades, subjects, chapters, subtopics, grade, subject, chapter, subtopic],
+  );
+
+  const consumer = mapping?.mappedTo
+    ? mapping.studentType
+      ? `${mapping.mappedTo} (${mapping.studentType})`
+      : mapping.mappedTo
+    : null;
 
   const afterReview = async () => {
     await Promise.all([
@@ -45,11 +111,7 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
     setError(null);
     try {
       await reviewMapping(assetId, "approve", reviewedBy);
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["mapping", assetId] }),
-        qc.invalidateQueries({ queryKey: ["mapped-assets"] }),
-      ]);
-      setApproveSuccessOpen(true);
+      setResult({ variant: "approved" });
     } catch (err) {
       if (err instanceof ReviewConflictError) {
         setError(
@@ -65,14 +127,15 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
   };
 
   const handleReject = async () => {
-    if (!canReview || !reason.trim()) return;
+    const trimmed = reason.trim();
+    if (!canReview || !trimmed) return;
     setSubmitting("reject");
     setError(null);
     try {
-      await reviewMapping(assetId, "reject", reviewedBy, reason.trim());
+      await reviewMapping(assetId, "reject", reviewedBy, trimmed);
       setRejectOpen(false);
       setReason("");
-      await afterReview();
+      setResult({ variant: "rejected", reason: trimmed });
     } catch (err) {
       if (err instanceof ReviewConflictError) {
         setError(
@@ -131,34 +194,17 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
         {error && <span className="text-sm text-danger">{error}</span>}
       </div>
 
-      {approveSuccessOpen && (
-        <Modal.Backdrop isOpen={approveSuccessOpen} variant="blur">
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>Approved successfully</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className="px-5 py-3">
-                <p className="text-sm text-muted">
-                  The submission has been approved.
-                </p>
-              </Modal.Body>
-              <Modal.Footer className="flex justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onPress={() => {
-                    setApproveSuccessOpen(false);
-                    navigate("/mapped-assets");
-                  }}
-                >
-                  Done
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      )}
+      <ReviewResultDialog
+        open={!!result}
+        variant={result?.variant ?? "approved"}
+        title={mapping.title}
+        mapped={{ ...mapped, consumer }}
+        reason={result?.reason}
+        onClose={() => {
+          setResult(null);
+          void afterReview();
+        }}
+      />
 
       {rejectOpen && (
         <Modal.Backdrop

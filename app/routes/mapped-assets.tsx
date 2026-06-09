@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router";
 import { Button, Input, Modal, Select, ListBox, Spinner, TextArea } from "@heroui/react";
 import NavBar from "~/components/NavBar";
 import PlayerDialog from "~/components/PlayerDialog";
+import ReviewResultDialog from "~/components/ReviewResultDialog";
 import StatusBadge from "~/components/StatusBadge";
 import { useUser, useUserRole } from "~/lib/auth";
 import { requireAuthedLoader } from "~/lib/server-auth";
@@ -183,9 +184,14 @@ export default function MappedAssetsPage() {
   const [reviewAction, setReviewAction] = useState<"approve" | "reject" | null>(
     null,
   );
-  const [rejectAssetId, setRejectAssetId] = useState<string | null>(null);
+  const [rejectAsset, setRejectAsset] = useState<MappedAsset | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [approvedAsset, setApprovedAsset] = useState<MappedAsset | null>(null);
+  const [rejectedResult, setRejectedResult] = useState<{
+    asset: MappedAsset;
+    reason: string;
+  } | null>(null);
 
   const user = useUser();
   const reviewedBy = user?.userName ?? "";
@@ -194,13 +200,14 @@ export default function MappedAssetsPage() {
     await qc.invalidateQueries({ queryKey: ["mapped-assets"] });
   };
 
-  const handleApprove = async (assetId: string) => {
-    setReviewingAssetId(assetId);
+  const handleApprove = async (asset: MappedAsset) => {
+    setReviewingAssetId(asset.assetId);
     setReviewAction("approve");
     setReviewError(null);
     try {
-      await reviewMapping(assetId, "approve", reviewedBy);
+      await reviewMapping(asset.assetId, "approve", reviewedBy);
       await refreshAfterReview();
+      setApprovedAsset(asset);
     } catch (err) {
       if (err instanceof ReviewConflictError) {
         setReviewError("This submission was changed. Refreshed.");
@@ -215,25 +222,23 @@ export default function MappedAssetsPage() {
   };
 
   const handleReject = async () => {
-    if (!rejectAssetId || !rejectReason.trim()) return;
-    setReviewingAssetId(rejectAssetId);
+    const reason = rejectReason.trim();
+    if (!rejectAsset || !reason) return;
+    const asset = rejectAsset;
+    setReviewingAssetId(asset.assetId);
     setReviewAction("reject");
     setReviewError(null);
     try {
-      await reviewMapping(
-        rejectAssetId,
-        "reject",
-        reviewedBy,
-        rejectReason.trim(),
-      );
-      setRejectAssetId(null);
+      await reviewMapping(asset.assetId, "reject", reviewedBy, reason);
+      setRejectAsset(null);
       setRejectReason("");
       await refreshAfterReview();
+      setRejectedResult({ asset, reason });
     } catch (err) {
       if (err instanceof ReviewConflictError) {
         setReviewError("This submission was changed. Refreshed.");
         await refreshAfterReview();
-        setRejectAssetId(null);
+        setRejectAsset(null);
       } else {
         setReviewError(err instanceof Error ? err.message : "Rejection failed");
       }
@@ -521,7 +526,7 @@ export default function MappedAssetsPage() {
                             <Button
                               size="sm"
                               variant="primary"
-                              onPress={() => handleApprove(asset.assetId)}
+                              onPress={() => handleApprove(asset)}
                               isDisabled={inFlight}
                               isPending={
                                 inFlight && reviewAction === "approve"
@@ -533,7 +538,7 @@ export default function MappedAssetsPage() {
                               size="sm"
                               variant="danger"
                               onPress={() => {
-                                setRejectAssetId(asset.assetId);
+                                setRejectAsset(asset);
                                 setRejectReason("");
                                 setReviewError(null);
                               }}
@@ -553,12 +558,12 @@ export default function MappedAssetsPage() {
         )}
       </div>
 
-      {rejectAssetId && (
+      {rejectAsset && (
         <Modal.Backdrop
-          isOpen={!!rejectAssetId}
+          isOpen={!!rejectAsset}
           onOpenChange={(open) => {
             if (!open && reviewAction !== "reject") {
-              setRejectAssetId(null);
+              setRejectAsset(null);
               setRejectReason("");
               setReviewError(null);
             }
@@ -590,7 +595,7 @@ export default function MappedAssetsPage() {
                   size="sm"
                   variant="ghost"
                   onPress={() => {
-                    setRejectAssetId(null);
+                    setRejectAsset(null);
                     setRejectReason("");
                     setReviewError(null);
                   }}
@@ -612,6 +617,35 @@ export default function MappedAssetsPage() {
           </Modal.Container>
         </Modal.Backdrop>
       )}
+
+      <ReviewResultDialog
+        open={!!approvedAsset}
+        variant="approved"
+        title={approvedAsset?.title}
+        mapped={{
+          grade: approvedAsset?.grade,
+          subject: approvedAsset?.subject,
+          chapter: approvedAsset?.chapter,
+          subtopic: approvedAsset?.subtopic,
+          consumer: approvedAsset?.consumer,
+        }}
+        onClose={() => setApprovedAsset(null)}
+      />
+
+      <ReviewResultDialog
+        open={!!rejectedResult}
+        variant="rejected"
+        title={rejectedResult?.asset.title}
+        mapped={{
+          grade: rejectedResult?.asset.grade,
+          subject: rejectedResult?.asset.subject,
+          chapter: rejectedResult?.asset.chapter,
+          subtopic: rejectedResult?.asset.subtopic,
+          consumer: rejectedResult?.asset.consumer,
+        }}
+        reason={rejectedResult?.reason}
+        onClose={() => setRejectedResult(null)}
+      />
 
       {selectedAssetId && playerLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

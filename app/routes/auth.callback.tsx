@@ -15,6 +15,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   try {
+    console.log(`${url.origin}/auth/callback`);
     const response = await axios.post<OAuthTokenResponse>(
       `${env.api_proxy_target}/api/v1/api/user/oauth/token`,
       {
