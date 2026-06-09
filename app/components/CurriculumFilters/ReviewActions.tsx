@@ -21,6 +21,7 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
     null,
   );
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [approveSuccessOpen, setApproveSuccessOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +45,11 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
     setError(null);
     try {
       await reviewMapping(assetId, "approve", reviewedBy);
-      await afterReview();
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["mapping", assetId] }),
+        qc.invalidateQueries({ queryKey: ["mapped-assets"] }),
+      ]);
+      setApproveSuccessOpen(true);
     } catch (err) {
       if (err instanceof ReviewConflictError) {
         setError(
@@ -125,6 +130,35 @@ export default function ReviewActions({ assetId, mapping }: ReviewActionsProps) 
         </Button>
         {error && <span className="text-sm text-danger">{error}</span>}
       </div>
+
+      {approveSuccessOpen && (
+        <Modal.Backdrop isOpen={approveSuccessOpen} variant="blur">
+          <Modal.Container size="sm" placement="center">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Approved successfully</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body className="px-5 py-3">
+                <p className="text-sm text-muted">
+                  The submission has been approved.
+                </p>
+              </Modal.Body>
+              <Modal.Footer className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onPress={() => {
+                    setApproveSuccessOpen(false);
+                    navigate("/mapped-assets");
+                  }}
+                >
+                  Done
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      )}
 
       {rejectOpen && (
         <Modal.Backdrop
