@@ -1,5 +1,6 @@
 import { redirect } from "react-router";
 import { env } from "./env";
+import { getRequestOrigin } from "./origin";
 import {
   parseAuthCookies,
   buildAccessCookieHeader,
@@ -124,7 +125,7 @@ export function authErrorResponse(err: unknown): Response {
 const ALLOWED_ROLES = new Set(["CONTENT_ADMIN", "CONTENT_REVIEWER"]);
 
 export function buildLmsLoginUrl(request: Request): string {
-  const origin = new URL(request.url).origin;
+  const origin = getRequestOrigin(request);
   const params = new URLSearchParams();
   params.set("client", "TCE-TEST-APP");
   params.set("redirectUri", `${origin}/auth/callback`);

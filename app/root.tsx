@@ -14,11 +14,12 @@ import { buildOgMeta } from "~/lib/og-meta";
 import { Provider } from "jotai";
 import { getStore } from "~/store";
 import { requireUser, type AuthedUser } from "~/lib/server-auth";
+import { getRequestOrigin } from "~/lib/origin";
 
 export const queryClient = new QueryClient();
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const origin = new URL(request.url).origin;
+  const origin = getRequestOrigin(request);
   let user: AuthedUser | null = null;
   let setCookieHeaders: Headers | null = null;
   try {

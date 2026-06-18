@@ -1,5 +1,6 @@
 import { useRouteLoaderData } from "react-router";
 import { env } from "./env";
+import { getClientOrigin } from "./origin";
 import type { AuthedUser } from "./server-auth";
 
 export type UserRole = "CONTENT_ADMIN" | "CONTENT_REVIEWER";
@@ -23,7 +24,7 @@ export function useUserRole(): UserRole | null {
 export function redirectToLogin() {
   const params = new URLSearchParams();
   params.set("client", "TCE-TEST-APP");
-  params.set("redirectUri", `${window.location.origin}/auth/callback`);
+  params.set("redirectUri", `${getClientOrigin()}/auth/callback`);
   window.location.href = `${env.login_url}/#/login/?${params.toString()}`;
 }
 
@@ -43,7 +44,7 @@ export async function logout() {
   // The LMS session itself is left intact.
   const params = new URLSearchParams();
   params.set("client", "TCE-TEST-APP");
-  params.set("redirectUri", `${window.location.origin}/auth/callback`);
+  params.set("redirectUri", `${getClientOrigin()}/auth/callback`);
   params.set("skipSso", "true");
   window.location.href = `${env.login_url}/#/login/?${params.toString()}`;
 }

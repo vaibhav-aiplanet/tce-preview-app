@@ -4,6 +4,7 @@ import { Button, Spinner } from "@heroui/react";
 import { redirectToLogin } from "~/lib/auth";
 import { buildSetCookieHeaders } from "~/lib/auth-cookies";
 import { env } from "~/lib/env";
+import { getRequestOrigin } from "~/lib/origin";
 import type { Route } from "./+types/auth.callback";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -14,14 +15,16 @@ export async function loader({ request }: Route.LoaderArgs) {
     return data({ error: "Missing authorization code" }, { status: 400 });
   }
 
+  const origin = getRequestOrigin(request);
+
   try {
-    console.log(`${url.origin}/auth/callback`);
+    console.log(`${origin}/auth/callback`);
     const response = await axios.post<OAuthTokenResponse>(
       `${env.api_proxy_target}/api/v1/api/user/oauth/token`,
       {
         code,
         clientId: "TCE-TEST-APP",
-        redirectUri: `${url.origin}/auth/callback`,
+        redirectUri: `${origin}/auth/callback`,
         grantType: "authorization_code",
       },
     );
