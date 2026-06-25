@@ -43,6 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       and(
         eq(subjects.active, true),
         eq(subjects.deleted, false),
+        eq(subjects.skilled_subject, true)
       ),
     );
 
