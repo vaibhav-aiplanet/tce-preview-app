@@ -1,10 +1,15 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchChapters, type CurriculumItem } from "~/lib/curriculum-api";
+import {
+    fetchChapters,
+    fetchSubtopics,
+    type CurriculumItem,
+} from "~/lib/curriculum-api";
 import {
     useCurrentBoard,
     useCurrentGrade,
     useCurrentSubject,
+    useCurrentSubtopic,
     useCurrentChapter,
     useSetCurrentChapter,
 } from "~/store";
@@ -14,13 +19,28 @@ export default function ChapterSelect() {
     const board = useCurrentBoard();
     const grade = useCurrentGrade();
     const subject = useCurrentSubject();
+    const subtopic = useCurrentSubtopic();
     const value = useCurrentChapter();
     const setValue = useSetCurrentChapter();
 
-    const { data: scoped = [] } = useQuery({
-        queryKey: ["chapters", subject, board, grade],
-        queryFn: () => fetchChapters(subject || "", board || "", grade || ""),
+    // Shared with SubtopicSelect (same query key) to know whether this subject
+    // has subtopics. When it does, a subtopic must be picked before chapters
+    // can be fetched/selected.
+    const { data: subtopics = [], isSuccess: subtopicsSettled } = useQuery({
+        queryKey: ["subtopics", subject],
+        queryFn: () => fetchSubtopics(subject || ""),
         enabled: !!subject,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const hasSubtopics = subtopics.length > 0;
+    const subtopicRequired = hasSubtopics && !subtopic;
+
+    const { data: scoped = [] } = useQuery({
+        queryKey: ["chapters", subject, board, grade, subtopic],
+        queryFn: () =>
+            fetchChapters(subject || "", board || "", grade || "", subtopic || ""),
+        enabled: !!subject && subtopicsSettled && !subtopicRequired,
         staleTime: 5 * 60 * 1000,
     });
 
@@ -47,7 +67,7 @@ export default function ChapterSelect() {
             items={items}
             value={value as string}
             onChange={setValue}
-            isDisabled={!subject}
+            isDisabled={!subject || subtopicRequired}
         />
     );
 }

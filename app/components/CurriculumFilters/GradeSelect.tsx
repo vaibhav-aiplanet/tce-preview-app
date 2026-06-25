@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import type { CurriculumItem } from "~/lib/curriculum-api";
-import { useCurrentGrade, useSetCurrentGrade } from "~/store";
+import { useCurrentGrade, useSelectGrade } from "~/store";
 
 import CurriculumSelect from "./CurriculumSelect";
 
 export default function GradeSelect() {
     const value = useCurrentGrade();
-    const setGrade = useSetCurrentGrade();
+    const setGrade = useSelectGrade();
 
     const { data: grades = [] } = useQuery<CurriculumItem[]>({
         queryKey: ["grades"],

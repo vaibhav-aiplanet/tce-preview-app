@@ -5,7 +5,7 @@ import {
     useCurrentBoard,
     useCurrentGrade,
     useCurrentSubject,
-    useSetCurrentSubject,
+    useSelectSubject,
 } from "~/store";
 import CurriculumSelect from "./CurriculumSelect";
 
@@ -13,7 +13,7 @@ export default function SubjectSelect() {
     const board = useCurrentBoard();
     const grade = useCurrentGrade();
     const value = useCurrentSubject();
-    const setSubject = useSetCurrentSubject();
+    const setSubject = useSelectSubject();
 
     const { data: scoped = [] } = useQuery({
         queryKey: ["subjects", board, grade],

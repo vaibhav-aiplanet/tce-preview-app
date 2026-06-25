@@ -47,6 +47,7 @@ export async function fetchChapters(
   subjectId: string,
   boardId: string,
   gradeId: string,
+  subTopicId?: string,
 ): Promise<CurriculumItem[]> {
   if (!subjectId) return [];
 
@@ -54,6 +55,7 @@ export async function fetchChapters(
   sp.append("subjectId", subjectId);
   sp.append("gradeId", gradeId);
   sp.append("boardId", boardId);
+  if (subTopicId) sp.append("subTopicId", subTopicId);
 
   const res = await fetch(`/_api/chapters?${sp.toString()}`);
   return res.json();

@@ -8,6 +8,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const subjectId = url.searchParams.get("subjectId");
   const boardId = url.searchParams.get("boardId");
   const gradeId = url.searchParams.get("gradeId");
+  const subTopicId = url.searchParams.get("subTopicId");
 
   if (!subjectId) {
     return Response.json([]);
@@ -24,6 +25,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
   if (gradeId) {
     conditions.push(eq(chapters.grade_id, gradeId));
+  }
+  if (subTopicId) {
+    conditions.push(eq(chapters.sub_topic_id, subTopicId));
   }
 
   const rows = await master_db

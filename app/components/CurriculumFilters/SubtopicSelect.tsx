@@ -12,12 +12,17 @@ export default function SubtopicSelect() {
     const value = useCurrentSubtopic();
     const setValue = useSetCurrentSubtopic();
 
-    const { data: subtopics = [] } = useQuery({
+    const { data: subtopics = [], isSuccess } = useQuery({
         queryKey: ["subtopics", subject],
         queryFn: () => fetchSubtopics(subject || ""),
         enabled: !!subject,
         staleTime: 5 * 60 * 1000,
     });
+
+    // Hide the filter entirely when the selected subject has no subtopics.
+    if (subject && isSuccess && subtopics.length === 0) {
+        return null;
+    }
 
     return (
         <CurriculumSelect

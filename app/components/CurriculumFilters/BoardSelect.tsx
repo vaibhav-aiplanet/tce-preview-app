@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { CurriculumItem } from "~/lib/curriculum-api";
-import { useCurrentBoard, useSetCurrentBoard } from "~/store";
+import { useCurrentBoard, useSetCurrentBoard, useSelectBoard } from "~/store";
 import CurriculumSelect from "./CurriculumSelect";
 
 export default function BoardSelect() {
     const value = useCurrentBoard();
     const setValue = useSetCurrentBoard();
+    const selectBoard = useSelectBoard();
 
     const { data: boards = [] } = useQuery<CurriculumItem[]>({
         queryKey: ["boards"],
@@ -28,7 +29,7 @@ export default function BoardSelect() {
             placeholder="Board"
             items={boards}
             value={value as string}
-            onChange={setValue}
+            onChange={selectBoard}
         />
     );
 }
